@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+
+# IntelliJ Platform
+.intellijPlatform/
+
+# IDE - Kişisel dosyalar
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# IDE - Copilot migration dosyaları (kişisel)
+.idea/copilot.data.migration.*.xml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local
+*.local
+local.properties

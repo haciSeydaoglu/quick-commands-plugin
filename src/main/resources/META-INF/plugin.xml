@@ -1,0 +1,63 @@
+<idea-plugin>
+    <id>com.quickcommands</id>
+    <name>Quick Commands</name>
+    <vendor email="haciseydaoglu@gmail.com">Haci Seydaoglu</vendor>
+
+    <description><![CDATA[
+        Quickly run predefined commands in the Terminal.
+        <br><br>
+        <b>Features:</b>
+        <ul>
+            <li>Dropdown menu in Terminal toolbar</li>
+            <li>Global commands (visible in all projects)</li>
+            <li>Project-specific commands</li>
+            <li>Easy configuration</li>
+        </ul>
+        <br>
+        <b>Usage:</b>
+        Click the ⚡ button in the Terminal panel to select your commands.
+        Manage your commands from Settings > Tools > Quick Commands.
+    ]]></description>
+
+    <!-- version ve change-notes build sirasinda CHANGELOG.md'den otomatik eklenir -->
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.plugins.terminal</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Settings page -->
+        <projectConfigurable
+                instance="com.quickcommands.settings.QuickCommandsConfigurable"
+                id="quick.commands.settings"
+                displayName="Quick Commands"
+                parentId="tools"/>
+
+        <!-- Global settings service (Application level) -->
+        <applicationService
+                serviceImplementation="com.quickcommands.settings.GlobalCommandSettings"/>
+
+        <!-- Project settings service (Project level) -->
+        <projectService
+                serviceImplementation="com.quickcommands.settings.ProjectCommandSettings"/>
+    </extensions>
+
+    <actions>
+        <!-- Add dropdown to Terminal toolbar -->
+        <group id="QuickCommands.Dropdown"
+               class="com.quickcommands.actions.QuickCommandsDropdownAction"
+               text="Quick Commands"
+               description="Run predefined terminal commands"
+               popup="true"
+               icon="AllIcons.Actions.Lightning">
+            <add-to-group group-id="TerminalToolwindowActionGroup" anchor="first"/>
+        </group>
+
+        <!-- Keyboard shortcut action for Quick Commands popup -->
+        <action id="QuickCommands.ShowQuickCommands"
+                class="com.quickcommands.actions.ShowQuickCommandsAction"
+                text="Show Quick Commands"
+                description="Open Quick Commands popup">
+            <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt T"/>
+        </action>
+    </actions>
+</idea-plugin>
