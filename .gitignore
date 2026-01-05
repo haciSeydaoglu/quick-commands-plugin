@@ -22,3 +22,10 @@ Thumbs.db
 # Local
 *.local
 local.properties
+
+# Plugin Signing - Sertifika ve anahtar dosyaları
+*.pem
+*.crt
+*.key
+*.p12
+*.jks

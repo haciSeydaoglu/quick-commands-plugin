@@ -46,4 +46,19 @@ tasks {
     wrapper {
         gradleVersion = "8.10"
     }
+
+    // Plugin imzalama yapılandırması
+    // Ortam değişkenleri: CERTIFICATE_CHAIN, PRIVATE_KEY, PRIVATE_KEY_PASSWORD
+    signPlugin {
+        certificateChain.set(providers.environmentVariable("CERTIFICATE_CHAIN"))
+        privateKey.set(providers.environmentVariable("PRIVATE_KEY"))
+        password.set(providers.environmentVariable("PRIVATE_KEY_PASSWORD"))
+    }
+
+    // Marketplace'e yayınlama yapılandırması
+    // Ortam değişkeni: PUBLISH_TOKEN
+    publishPlugin {
+        token.set(providers.environmentVariable("PUBLISH_TOKEN"))
+        // channels.set(listOf("beta")) // Beta kanalı için açılabilir
+    }
 }

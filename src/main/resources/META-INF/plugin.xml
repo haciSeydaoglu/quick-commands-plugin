@@ -4,19 +4,42 @@
     <vendor email="haciseydaoglu@gmail.com">Haci Seydaoglu</vendor>
 
     <description><![CDATA[
-        Quickly run predefined commands in the Terminal.
+        Quick Commands - Execute terminal commands with a single click from your IDE toolbar.
         <br><br>
-        <b>Features:</b>
+        Stop typing the same commands over and over. Quick Commands adds a dropdown menu to your Terminal toolbar,
+        giving you instant access to your most-used commands like <code>git pull</code>, <code>npm run dev</code>,
+        <code>docker-compose up</code>, or any custom script.
+        <br><br>
+
+        <b>✨ Key Features:</b>
         <ul>
-            <li>Dropdown menu in Terminal toolbar</li>
-            <li>Global commands (visible in all projects)</li>
-            <li>Project-specific commands</li>
-            <li>Easy configuration</li>
+            <li><b>One-Click Execution</b> - Run commands directly from the Terminal toolbar dropdown</li>
+            <li><b>Global Commands</b> - Define commands that are available across all your projects</li>
+            <li><b>Project Commands</b> - Set up project-specific commands stored in your project settings</li>
+            <li><b>Keyboard Shortcut</b> - Quick access via <code>Ctrl+Alt+T</code> (customizable)</li>
+            <li><b>Simple Configuration</b> - Easy-to-use settings UI under Tools > Quick Commands</li>
         </ul>
         <br>
-        <b>Usage:</b>
-        Click the ⚡ button in the Terminal panel to select your commands.
-        Manage your commands from Settings > Tools > Quick Commands.
+
+        <b>🚀 Getting Started:</b>
+        <ol>
+            <li>Open <b>Settings > Tools > Quick Commands</b></li>
+            <li>Add your commands (e.g., "Build" → <code>./gradlew build</code>)</li>
+            <li>Click the ⚡ icon in the Terminal toolbar to run them</li>
+        </ol>
+        <br>
+
+        <b>💡 Use Cases:</b>
+        <ul>
+            <li>Build and run scripts (<code>npm start</code>, <code>gradle build</code>)</li>
+            <li>Git operations (<code>git pull</code>, <code>git push</code>)</li>
+            <li>Docker commands (<code>docker-compose up -d</code>)</li>
+            <li>Test runners (<code>pytest</code>, <code>jest</code>)</li>
+            <li>Any terminal command you use frequently</li>
+        </ul>
+        <br>
+
+        <b>Supported IDEs:</b> IntelliJ IDEA, PhpStorm, WebStorm, PyCharm, Android Studio, and all JetBrains IDEs (2024.2+)
     ]]></description>
 
     <!-- version ve change-notes build sirasinda CHANGELOG.md'den otomatik eklenir -->
