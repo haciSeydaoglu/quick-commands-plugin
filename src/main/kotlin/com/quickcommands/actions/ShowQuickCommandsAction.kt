@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.wm.IdeFocusManager
 
 /**
  * Keyboard shortcut ile Quick Commands popup'ını açar
@@ -26,6 +29,13 @@ class ShowQuickCommandsAction : AnAction(), DumbAware {
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
             true
         )
+
+        // Popup kapandığında focus'un düzgün settle olmasını sağla
+        popup.addListener(object : JBPopupListener {
+            override fun onClosed(event: LightweightWindowEvent) {
+                IdeFocusManager.getInstance(project).doWhenFocusSettlesDown {}
+            }
+        })
 
         popup.showCenteredInCurrentWindow(project)
     }

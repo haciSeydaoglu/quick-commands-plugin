@@ -1,9 +1,17 @@
 # Changelog
 
+## [1.1.2]
+- Fix: Improved terminal focus handling using doWhenFocusSettlesDown API
+- Fix: Terminal keyboard input (Shift+Enter/Option+Enter) now works reliably after keyboard shortcut selection
+
+## [1.1.1]
+- Fix: Terminal keyboard input (Shift+Enter/Option+Enter) not working after selecting command via keyboard shortcut
+- Improved focus management: Force focus transfer to terminal after popup closes using IdeFocusManager
+
 ## [1.1.0]
-- Platform desteği 2024.2 - 2025.3 olarak güncellendi
-- Java 21 desteği eklendi
-- Otomatik sürüm ve changelog yönetimi eklendi
+- Updated platform support to 2024.2 - 2025.3
+- Added Java 21 support
+- Added automatic version and changelog management
 
 ## [1.0.0]
 - Initial release
