@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.3.1]
+- Fix: Prevent empty terminal tab being created when running a command with Terminal window closed
+- Use `toolWindow.show()` instead of `activate()` to avoid default tab creation
+
+## [1.3.0]
+- Added separator (divider line) support for command lists
+- Added "Add Separator" button and Ctrl+Shift+S shortcut in settings UI
+- Added "Reset to Defaults" button in settings toolbar
+- Expanded default commands: Claude, Codex, ../Claude, ../Codex with super mode variants
+- Fixed emoji characters being lost during XML serialization (EmojiSafeConverter)
+
+## [1.2.0]
+- Migrated to IntelliJ Platform Gradle Plugin 2.13.1 (from legacy 1.17.4)
+- Upgraded Gradle to 9.0
+- Upgraded Kotlin to 2.0.21
+- Replaced deprecated Terminal API with modern TerminalWidget.sendCommandToExecute
+- Extended platform support to 2026.1 (PhpStorm 2026.1 compatibility)
+
 ## [1.1.4]
 - Revert: Removed manual focus management that caused issues
 - Fix: Let ToolWindow handle focus naturally (JetBrains recommendation)

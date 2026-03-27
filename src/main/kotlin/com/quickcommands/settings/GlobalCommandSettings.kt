@@ -19,15 +19,26 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 @Service(Service.Level.APP)
 class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {
 
-    var commands: MutableList<CommandEntry> = mutableListOf(
-        CommandEntry("Claude", "claude"),
-        CommandEntry("Claude (Super Permission)", "claude --dangerously-skip-permissions")
-    )
+    var commands: MutableList<CommandEntry> = createDefaultCommands()
 
     companion object {
         fun getInstance(): GlobalCommandSettings {
             return ApplicationManager.getApplication().getService(GlobalCommandSettings::class.java)
         }
+
+        fun createDefaultCommands(): MutableList<CommandEntry> = mutableListOf(
+            CommandEntry("claude", "claude"),
+            CommandEntry("claude\uD83D\uDE80", "claude --dangerously-skip-permissions"),
+            CommandEntry.createSeparator(),
+            CommandEntry("codex", "codex"),
+            CommandEntry("codex\uD83D\uDE80", "codex --yolo"),
+            CommandEntry.createSeparator(),
+            CommandEntry("../claude", "cd ../ && claude"),
+            CommandEntry("../claude\uD83D\uDE80", "cd ../ && claude --dangerously-skip-permissions"),
+            CommandEntry.createSeparator(),
+            CommandEntry("../codex", "cd ../ && codex"),
+            CommandEntry("../codex\uD83D\uDE80", "cd ../ && codex --yolo")
+        )
     }
 
     override fun getState(): GlobalCommandSettings = this

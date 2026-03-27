@@ -29,7 +29,11 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
         if (globalCommands.isNotEmpty()) {
             actions.add(Separator.create("Global"))
             globalCommands.forEach { cmd ->
-                actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                if (cmd.separator) {
+                    actions.add(Separator.create())
+                } else {
+                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                }
             }
         }
 
@@ -38,7 +42,11 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
         if (projectCommands.isNotEmpty()) {
             actions.add(Separator.create("Project: ${project.name}"))
             projectCommands.forEach { cmd ->
-                actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                if (cmd.separator) {
+                    actions.add(Separator.create())
+                } else {
+                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                }
             }
         }
 

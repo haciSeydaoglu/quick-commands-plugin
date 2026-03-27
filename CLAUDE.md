@@ -93,6 +93,8 @@ Her değişiklikten sonra `gradle.properties` dosyasındaki `pluginVersion` değ
 1. `gradle.properties` → `pluginVersion` güncelle
 2. `CHANGELOG.md` → Yeni sürüm notları ekle (en üste)
 
+**CHANGELOG.md Dil Kuralı:** CHANGELOG.md her zaman **İngilizce** yazılmalıdır.
+
 ## Development Notes
 
 - All source files include Claude attribution comments (70%+)
