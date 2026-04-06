@@ -1,23 +1,39 @@
 package com.quickcommands.settings
 
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonSyntaxException
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ShortcutSet
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.icons.AllIcons
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.table.JBTable
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Color
+import java.awt.Dimension
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.StringSelection
+import java.io.File
 import javax.swing.JComponent
+import javax.swing.JFileChooser
 import javax.swing.JPanel
+import javax.swing.JPopupMenu
+import javax.swing.JMenuItem
 import javax.swing.JTable
 import javax.swing.KeyStroke
+import javax.swing.event.TableModelEvent
+import javax.swing.event.TableModelListener
+import javax.swing.filechooser.FileNameExtensionFilter
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
 
@@ -30,7 +46,20 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     companion object {
         private const val SEPARATOR_DISPLAY = "─────────────"
+        private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
     }
+
+    /** JSON import/export veri modeli */
+    private data class ExportData(
+        val version: Int = 1,
+        val commands: List<ExportCommand> = emptyList()
+    )
+
+    private data class ExportCommand(
+        val name: String? = null,
+        val command: String? = null,
+        val separator: Boolean = false
+    )
 
     private var globalTableModel: DefaultTableModel? = null
     private var projectTableModel: DefaultTableModel? = null
@@ -121,7 +150,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
         val toolbar = ToolbarDecorator.createDecorator(table)
             .setAddAction {
-                tableModel.addRow(arrayOf("New Command", "", false))
+                val uniqueName = generateUniqueName(tableModel, "New Command")
+                tableModel.addRow(arrayOf(uniqueName, "", false))
                 val row = tableModel.rowCount - 1
                 table.editCellAt(row, 0)
                 table.setRowSelectionInterval(row, row)
@@ -168,7 +198,30 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                     }
                 }
             })
-            .createPanel()
+
+        // Global sekmede import/export butonlari
+        if (isGlobal) {
+            toolbar.addExtraAction(object : AnAction(
+                "Disa Aktar",
+                "Komutlari JSON olarak disa aktar",
+                AllIcons.ToolbarDecorator.Export
+            ) {
+                override fun actionPerformed(e: AnActionEvent) {
+                    showExportPopup(tableModel, e)
+                }
+            })
+            toolbar.addExtraAction(object : AnAction(
+                "Ice Aktar",
+                "JSON formatinda komut ice aktar",
+                AllIcons.ToolbarDecorator.Import
+            ) {
+                override fun actionPerformed(e: AnActionEvent) {
+                    showImportPopup(tableModel, table, e)
+                }
+            })
+        }
+
+        val toolbarPanel = toolbar.createPanel()
 
         // Separator kısayolunu tabloya kaydet
         table.registerKeyboardAction(
@@ -177,9 +230,12 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             JComponent.WHEN_FOCUSED
         )
 
+        // Duplicate isim kontrolu icin listener
+        addDuplicateNameListener(tableModel)
+
         val panel = JPanel(BorderLayout())
         panel.add(JBLabel("<html><i>$hint</i></html>"), BorderLayout.NORTH)
-        panel.add(toolbar, BorderLayout.CENTER)
+        panel.add(toolbarPanel, BorderLayout.CENTER)
 
         return panel
     }
@@ -247,5 +303,291 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         mainPanel = null
         globalTableModel = null
         projectTableModel = null
+    }
+
+    // ── Duplicate isim kontrolu ──────────────────────────────────────────
+
+    /** Tablodaki mevcut isimlere bakarak benzersiz isim uretir */
+    private fun generateUniqueName(model: DefaultTableModel, baseName: String): String {
+        val mevcutIsimler = collectNames(model)
+        if (baseName !in mevcutIsimler) return baseName
+        var sayac = 2
+        while ("$baseName ($sayac)" in mevcutIsimler) sayac++
+        return "$baseName ($sayac)"
+    }
+
+    /** Tablodaki tum komut isimlerini toplar (separator haric) */
+    private fun collectNames(model: DefaultTableModel, excludeRow: Int = -1): Set<String> {
+        val isimler = mutableSetOf<String>()
+        for (i in 0 until model.rowCount) {
+            if (i == excludeRow) continue
+            val isSep = model.getValueAt(i, 2) as? Boolean ?: false
+            if (!isSep) {
+                val name = (model.getValueAt(i, 0) as? String)?.trim() ?: ""
+                if (name.isNotBlank()) isimler.add(name)
+            }
+        }
+        return isimler
+    }
+
+    /** Isim duzenlendiginde duplicate kontrol eden listener */
+    private fun addDuplicateNameListener(model: DefaultTableModel) {
+        // Onceki degerleri saklamak icin
+        var oncekiDegerler = mutableMapOf<Int, String>()
+
+        // Baslangic degerlerini kaydet
+        for (i in 0 until model.rowCount) {
+            val isSep = model.getValueAt(i, 2) as? Boolean ?: false
+            if (!isSep) {
+                oncekiDegerler[i] = (model.getValueAt(i, 0) as? String) ?: ""
+            }
+        }
+
+        model.addTableModelListener(object : TableModelListener {
+            private var dinlemeyiAtla = false
+
+            override fun tableChanged(e: TableModelEvent) {
+                if (dinlemeyiAtla) return
+                if (e.type != TableModelEvent.UPDATE) {
+                    // Satir ekleme/silme durumunda onceki degerleri guncelle
+                    oncekiDegerler.clear()
+                    for (i in 0 until model.rowCount) {
+                        val isSep = model.getValueAt(i, 2) as? Boolean ?: false
+                        if (!isSep) {
+                            oncekiDegerler[i] = (model.getValueAt(i, 0) as? String) ?: ""
+                        }
+                    }
+                    return
+                }
+
+                // Sadece isim sutunu (0) degistiginde kontrol et
+                if (e.column != 0) return
+                val satir = e.firstRow
+                if (satir < 0 || satir >= model.rowCount) return
+
+                val isSep = model.getValueAt(satir, 2) as? Boolean ?: false
+                if (isSep) return
+
+                val yeniIsim = (model.getValueAt(satir, 0) as? String)?.trim() ?: ""
+                if (yeniIsim.isBlank()) return
+
+                val digerIsimler = collectNames(model, excludeRow = satir)
+                if (yeniIsim in digerIsimler) {
+                    dinlemeyiAtla = true
+                    val eskiDeger = oncekiDegerler[satir] ?: ""
+                    model.setValueAt(eskiDeger, satir, 0)
+                    dinlemeyiAtla = false
+                    Messages.showWarningDialog(
+                        "'$yeniIsim' isimli bir komut zaten mevcut.",
+                        "Ayni Isim Kullanilamaz"
+                    )
+                } else {
+                    oncekiDegerler[satir] = yeniIsim
+                }
+            }
+        })
+    }
+
+    // ── Export islemleri ──────────────────────────────────────────────────
+
+    private fun showExportPopup(model: DefaultTableModel, e: AnActionEvent) {
+        val popup = JPopupMenu()
+
+        val panoyaKopyala = JMenuItem("Panoya Kopyala")
+        panoyaKopyala.addActionListener { exportToClipboard(model) }
+        popup.add(panoyaKopyala)
+
+        val dosyayaKaydet = JMenuItem("Dosyaya Kaydet")
+        dosyayaKaydet.addActionListener { exportToFile(model) }
+        popup.add(dosyayaKaydet)
+
+        val component = e.inputEvent?.component
+        if (component != null) {
+            popup.show(component, 0, component.height)
+        } else {
+            // Fallback: mainPanel uzerinde goster
+            mainPanel?.let { popup.show(it, it.width / 2, it.height / 2) }
+        }
+    }
+
+    private fun exportCommandsToJson(model: DefaultTableModel): String {
+        val komutlar = mutableListOf<ExportCommand>()
+        for (i in 0 until model.rowCount) {
+            val isSep = model.getValueAt(i, 2) as? Boolean ?: false
+            if (isSep) {
+                komutlar.add(ExportCommand(separator = true))
+            } else {
+                val name = model.getValueAt(i, 0) as? String ?: ""
+                val command = model.getValueAt(i, 1) as? String ?: ""
+                if (name.isNotBlank() || command.isNotBlank()) {
+                    komutlar.add(ExportCommand(name = name, command = command))
+                }
+            }
+        }
+        return gson.toJson(ExportData(commands = komutlar))
+    }
+
+    private fun exportToClipboard(model: DefaultTableModel) {
+        val json = exportCommandsToJson(model)
+        CopyPasteManager.getInstance().setContents(StringSelection(json))
+        Messages.showInfoMessage("Komutlar panoya kopyalandi.", "Disa Aktarma Basarili")
+    }
+
+    private fun exportToFile(model: DefaultTableModel) {
+        val json = exportCommandsToJson(model)
+        val dosyaSecici = JFileChooser()
+        dosyaSecici.dialogTitle = "Komutlari Kaydet"
+        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON Dosyasi (*.json)", "json")
+        dosyaSecici.selectedFile = File("quick-commands.json")
+
+        if (dosyaSecici.showSaveDialog(mainPanel) == JFileChooser.APPROVE_OPTION) {
+            var dosya = dosyaSecici.selectedFile
+            if (!dosya.name.endsWith(".json")) {
+                dosya = File(dosya.absolutePath + ".json")
+            }
+            dosya.writeText(json, Charsets.UTF_8)
+            Messages.showInfoMessage("Komutlar kaydedildi:\n${dosya.absolutePath}", "Disa Aktarma Basarili")
+        }
+    }
+
+    // ── Import islemleri ──────────────────────────────────────────────────
+
+    private fun showImportPopup(model: DefaultTableModel, table: JBTable, e: AnActionEvent) {
+        val popup = JPopupMenu()
+
+        val panodanYapistir = JMenuItem("Panodan Yapistir")
+        panodanYapistir.addActionListener { importFromClipboard(model, table) }
+        popup.add(panodanYapistir)
+
+        val dosyadanYukle = JMenuItem("Dosyadan Yukle")
+        dosyadanYukle.addActionListener { importFromFile(model, table) }
+        popup.add(dosyadanYukle)
+
+        val component = e.inputEvent?.component
+        if (component != null) {
+            popup.show(component, 0, component.height)
+        } else {
+            mainPanel?.let { popup.show(it, it.width / 2, it.height / 2) }
+        }
+    }
+
+    private fun parseCommandsFromJson(json: String): List<ExportCommand>? {
+        return try {
+            val data = gson.fromJson(json, ExportData::class.java)
+            if (data?.commands == null) null else data.commands
+        } catch (e: JsonSyntaxException) {
+            null
+        }
+    }
+
+    private fun importFromClipboard(model: DefaultTableModel, table: JBTable) {
+        val icerik = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)
+        if (icerik.isNullOrBlank()) {
+            Messages.showWarningDialog("Panoda gecerli bir icerik bulunamadi.", "Ice Aktarma Hatasi")
+            return
+        }
+        processImport(icerik, model, table)
+    }
+
+    private fun importFromFile(model: DefaultTableModel, table: JBTable) {
+        val dosyaSecici = JFileChooser()
+        dosyaSecici.dialogTitle = "Komutlari Yukle"
+        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON Dosyasi (*.json)", "json")
+
+        if (dosyaSecici.showOpenDialog(mainPanel) == JFileChooser.APPROVE_OPTION) {
+            val icerik = dosyaSecici.selectedFile.readText(Charsets.UTF_8)
+            processImport(icerik, model, table)
+        }
+    }
+
+    private fun processImport(json: String, model: DefaultTableModel, table: JBTable) {
+        val komutlar = parseCommandsFromJson(json)
+        if (komutlar == null || komutlar.isEmpty()) {
+            Messages.showWarningDialog(
+                "Gecersiz veya bos JSON formati. Lutfen gecerli bir Quick Commands export dosyasi kullanin.",
+                "Ice Aktarma Hatasi"
+            )
+            return
+        }
+
+        // Onizleme dialog'u goster
+        if (!showImportPreviewDialog(komutlar)) return
+
+        // Upsert uygula
+        applyUpsert(komutlar, model)
+        table.clearSelection()
+    }
+
+    /** Import onizleme dialog'u - kullaniciya iceri aktarilacak komutlari gosterir */
+    private fun showImportPreviewDialog(komutlar: List<ExportCommand>): Boolean {
+        val dialog = object : DialogWrapper(project, false) {
+            init {
+                title = "Ice Aktarma Onizlemesi"
+                setOKButtonText("Ice Aktar")
+                setCancelButtonText("Iptal")
+                init()
+            }
+
+            override fun createCenterPanel(): JComponent {
+                val onizlemeModel = DefaultTableModel(arrayOf("Isim", "Komut"), 0)
+                komutlar.forEach { cmd ->
+                    if (cmd.separator) {
+                        onizlemeModel.addRow(arrayOf(SEPARATOR_DISPLAY, ""))
+                    } else {
+                        onizlemeModel.addRow(arrayOf(cmd.name ?: "", cmd.command ?: ""))
+                    }
+                }
+
+                val tablo = JBTable(onizlemeModel)
+                tablo.isEnabled = false
+                tablo.columnModel.getColumn(0).preferredWidth = 150
+                tablo.columnModel.getColumn(1).preferredWidth = 400
+
+                val panel = JPanel(BorderLayout())
+                panel.add(
+                    JBLabel("<html><i>Asagidaki komutlar ice aktarilacak. Ayni isimli komutlar guncellenecek, yeni olanlar eklenecek.</i></html>"),
+                    BorderLayout.NORTH
+                )
+                panel.add(JBScrollPane(tablo), BorderLayout.CENTER)
+                panel.preferredSize = Dimension(600, 300)
+
+                return panel
+            }
+        }
+        return dialog.showAndGet()
+    }
+
+    /** Upsert: ayni isimde varsa guncelle, yoksa ekle */
+    private fun applyUpsert(komutlar: List<ExportCommand>, model: DefaultTableModel) {
+        komutlar.forEach { cmd ->
+            if (cmd.separator) {
+                model.addRow(arrayOf(SEPARATOR_DISPLAY, "", true))
+            } else {
+                val isim = cmd.name?.trim() ?: ""
+                val komut = cmd.command ?: ""
+                if (isim.isBlank() && komut.isBlank()) return@forEach
+
+                // Ayni isimli satir var mi kontrol et
+                var mevcutSatir = -1
+                for (i in 0 until model.rowCount) {
+                    val isSep = model.getValueAt(i, 2) as? Boolean ?: false
+                    if (!isSep) {
+                        val mevcutIsim = (model.getValueAt(i, 0) as? String)?.trim() ?: ""
+                        if (mevcutIsim == isim) {
+                            mevcutSatir = i
+                            break
+                        }
+                    }
+                }
+
+                if (mevcutSatir >= 0) {
+                    // Guncelle
+                    model.setValueAt(komut, mevcutSatir, 1)
+                } else {
+                    // Yeni ekle
+                    model.addRow(arrayOf(isim, komut, false))
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -14,7 +15,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  */
 @State(
     name = "TerminalCommanderGlobalSettings",
-    storages = [Storage(value = "terminalCommanderGlobal.xml", roamingType = RoamingType.DEFAULT)]
+    storages = [Storage(value = "terminalCommanderGlobal.xml", roamingType = RoamingType.DEFAULT)],
+    category = SettingsCategory.TOOLS
 )
 @Service(Service.Level.APP)
 class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {

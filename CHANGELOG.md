@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0]
+- Added import/export functionality for Global Commands settings
+- Export: Copy to clipboard or save as JSON file
+- Import: Paste from clipboard or load from JSON file with preview dialog
+- Import uses upsert logic: updates existing commands by name, adds new ones
+- Added duplicate command name prevention across both Global and Project tabs
+- New commands auto-generate unique names when duplicates exist
+
 ## [1.3.1]
 - Fix: Prevent empty terminal tab being created when running a command with Terminal window closed
 - Use `toolWindow.show()` instead of `activate()` to avoid default tab creation
