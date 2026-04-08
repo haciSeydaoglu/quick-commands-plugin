@@ -202,8 +202,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         // Global sekmede import/export butonlari
         if (isGlobal) {
             toolbar.addExtraAction(object : AnAction(
-                "Disa Aktar",
-                "Komutlari JSON olarak disa aktar",
+                "Export",
+                "Export commands as JSON",
                 AllIcons.ToolbarDecorator.Export
             ) {
                 override fun actionPerformed(e: AnActionEvent) {
@@ -211,8 +211,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 }
             })
             toolbar.addExtraAction(object : AnAction(
-                "Ice Aktar",
-                "JSON formatinda komut ice aktar",
+                "Import",
+                "Import commands from JSON",
                 AllIcons.ToolbarDecorator.Import
             ) {
                 override fun actionPerformed(e: AnActionEvent) {
@@ -378,8 +378,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                     model.setValueAt(eskiDeger, satir, 0)
                     dinlemeyiAtla = false
                     Messages.showWarningDialog(
-                        "'$yeniIsim' isimli bir komut zaten mevcut.",
-                        "Ayni Isim Kullanilamaz"
+                        "A command named '$yeniIsim' already exists.",
+                        "Duplicate Name"
                     )
                 } else {
                     oncekiDegerler[satir] = yeniIsim
@@ -393,11 +393,11 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun showExportPopup(model: DefaultTableModel, e: AnActionEvent) {
         val popup = JPopupMenu()
 
-        val panoyaKopyala = JMenuItem("Panoya Kopyala")
+        val panoyaKopyala = JMenuItem("Copy to Clipboard")
         panoyaKopyala.addActionListener { exportToClipboard(model) }
         popup.add(panoyaKopyala)
 
-        val dosyayaKaydet = JMenuItem("Dosyaya Kaydet")
+        val dosyayaKaydet = JMenuItem("Save to File")
         dosyayaKaydet.addActionListener { exportToFile(model) }
         popup.add(dosyayaKaydet)
 
@@ -430,14 +430,14 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun exportToClipboard(model: DefaultTableModel) {
         val json = exportCommandsToJson(model)
         CopyPasteManager.getInstance().setContents(StringSelection(json))
-        Messages.showInfoMessage("Komutlar panoya kopyalandi.", "Disa Aktarma Basarili")
+        Messages.showInfoMessage("Commands copied to clipboard.", "Export Successful")
     }
 
     private fun exportToFile(model: DefaultTableModel) {
         val json = exportCommandsToJson(model)
         val dosyaSecici = JFileChooser()
-        dosyaSecici.dialogTitle = "Komutlari Kaydet"
-        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON Dosyasi (*.json)", "json")
+        dosyaSecici.dialogTitle = "Save Commands"
+        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON File (*.json)", "json")
         dosyaSecici.selectedFile = File("quick-commands.json")
 
         if (dosyaSecici.showSaveDialog(mainPanel) == JFileChooser.APPROVE_OPTION) {
@@ -446,7 +446,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 dosya = File(dosya.absolutePath + ".json")
             }
             dosya.writeText(json, Charsets.UTF_8)
-            Messages.showInfoMessage("Komutlar kaydedildi:\n${dosya.absolutePath}", "Disa Aktarma Basarili")
+            Messages.showInfoMessage("Commands saved:\n${dosya.absolutePath}", "Export Successful")
         }
     }
 
@@ -455,11 +455,11 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun showImportPopup(model: DefaultTableModel, table: JBTable, e: AnActionEvent) {
         val popup = JPopupMenu()
 
-        val panodanYapistir = JMenuItem("Panodan Yapistir")
+        val panodanYapistir = JMenuItem("Paste from Clipboard")
         panodanYapistir.addActionListener { importFromClipboard(model, table) }
         popup.add(panodanYapistir)
 
-        val dosyadanYukle = JMenuItem("Dosyadan Yukle")
+        val dosyadanYukle = JMenuItem("Load from File")
         dosyadanYukle.addActionListener { importFromFile(model, table) }
         popup.add(dosyadanYukle)
 
@@ -483,7 +483,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun importFromClipboard(model: DefaultTableModel, table: JBTable) {
         val icerik = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)
         if (icerik.isNullOrBlank()) {
-            Messages.showWarningDialog("Panoda gecerli bir icerik bulunamadi.", "Ice Aktarma Hatasi")
+            Messages.showWarningDialog("No valid content found in clipboard.", "Import Error")
             return
         }
         processImport(icerik, model, table)
@@ -491,8 +491,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     private fun importFromFile(model: DefaultTableModel, table: JBTable) {
         val dosyaSecici = JFileChooser()
-        dosyaSecici.dialogTitle = "Komutlari Yukle"
-        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON Dosyasi (*.json)", "json")
+        dosyaSecici.dialogTitle = "Load Commands"
+        dosyaSecici.fileFilter = FileNameExtensionFilter("JSON File (*.json)", "json")
 
         if (dosyaSecici.showOpenDialog(mainPanel) == JFileChooser.APPROVE_OPTION) {
             val icerik = dosyaSecici.selectedFile.readText(Charsets.UTF_8)
@@ -504,8 +504,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         val komutlar = parseCommandsFromJson(json)
         if (komutlar == null || komutlar.isEmpty()) {
             Messages.showWarningDialog(
-                "Gecersiz veya bos JSON formati. Lutfen gecerli bir Quick Commands export dosyasi kullanin.",
-                "Ice Aktarma Hatasi"
+                "Invalid or empty JSON format. Please use a valid Quick Commands export file.",
+                "Import Error"
             )
             return
         }
@@ -522,14 +522,14 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun showImportPreviewDialog(komutlar: List<ExportCommand>): Boolean {
         val dialog = object : DialogWrapper(project, false) {
             init {
-                title = "Ice Aktarma Onizlemesi"
-                setOKButtonText("Ice Aktar")
-                setCancelButtonText("Iptal")
+                title = "Import Preview"
+                setOKButtonText("Import")
+                setCancelButtonText("Cancel")
                 init()
             }
 
             override fun createCenterPanel(): JComponent {
-                val onizlemeModel = DefaultTableModel(arrayOf("Isim", "Komut"), 0)
+                val onizlemeModel = DefaultTableModel(arrayOf("Name", "Command"), 0)
                 komutlar.forEach { cmd ->
                     if (cmd.separator) {
                         onizlemeModel.addRow(arrayOf(SEPARATOR_DISPLAY, ""))
@@ -545,7 +545,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
                 val panel = JPanel(BorderLayout())
                 panel.add(
-                    JBLabel("<html><i>Asagidaki komutlar ice aktarilacak. Ayni isimli komutlar guncellenecek, yeni olanlar eklenecek.</i></html>"),
+                    JBLabel("<html><i>The following commands will be imported. Existing commands with the same name will be updated.</i></html>"),
                     BorderLayout.NORTH
                 )
                 panel.add(JBScrollPane(tablo), BorderLayout.CENTER)

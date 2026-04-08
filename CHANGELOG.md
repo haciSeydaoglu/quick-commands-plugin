@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.4.1]
+- Fix: Changed all UI strings from Turkish to English for consistency with the rest of the plugin
+
 ## [1.4.0]
 - Added import/export functionality for Global Commands settings
 - Export: Copy to clipboard or save as JSON file
