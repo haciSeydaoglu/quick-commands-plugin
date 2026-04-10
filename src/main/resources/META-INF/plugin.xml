@@ -62,6 +62,14 @@
         <!-- Project settings service (Project level) -->
         <projectService
                 serviceImplementation="com.quickcommands.settings.ProjectCommandSettings"/>
+
+        <!-- Script detection service (Project level) -->
+        <projectService
+                serviceImplementation="com.quickcommands.services.ScriptDetectionService"/>
+
+        <!-- Claude skill detection service (Project level) -->
+        <projectService
+                serviceImplementation="com.quickcommands.services.ClaudeSkillDetectionService"/>
     </extensions>
 
     <actions>

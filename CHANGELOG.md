@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.5.0]
+- Auto-detect scripts from package.json and composer.json files in the project
+- Supports monorepo structures: nested package.json files grouped by folder with submenus
+- Root scripts shown directly in dropdown, nested scripts in collapsible submenus
+- Automatic package manager detection: npm, yarn, pnpm, bun (based on lock files)
+- Package manager inheritance: nested packages without lock files inherit root's package manager
+- Automatic emoji icons for scripts based on name (build, test, dev, deploy, docker, etc.)
+- Composer scripts included with event hooks filtered out
+- Auto-detect Claude Code skills and commands (global, project, and plugins)
+- Claude skills configurable: enable/disable and optional --dangerously-skip-permissions mode
+- Clean settings UI with grouped checkboxes in Project Commands tab
+- File watcher invalidates cache when relevant files change
+
 ## [1.4.1]
 - Fix: Changed all UI strings from Turkish to English for consistency with the rest of the plugin
 

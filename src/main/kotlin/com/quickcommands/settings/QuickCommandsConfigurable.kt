@@ -13,17 +13,23 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.icons.AllIcons
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Color
 import java.awt.Dimension
+import java.awt.FlowLayout
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.StringSelection
 import java.io.File
+import javax.swing.BorderFactory
+import javax.swing.BoxLayout
+import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.JFileChooser
 import javax.swing.JPanel
@@ -39,7 +45,7 @@ import javax.swing.table.DefaultTableModel
 
 /**
  * Quick Commands settings page
- * Two tabs: Global Commands and Project Commands
+ * Three tabs: Global Commands, Project Commands, Settings
  * 70%+ written with Claude
  */
 class QuickCommandsConfigurable(private val project: Project) : Configurable {
@@ -63,6 +69,14 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     private var globalTableModel: DefaultTableModel? = null
     private var projectTableModel: DefaultTableModel? = null
+
+    // Settings tab checkbox'lari
+    private var autoDetectCheckbox: JBCheckBox? = null
+    private var claudeSkillsCheckbox: JBCheckBox? = null
+    private var claudeDangerousCheckbox: JBCheckBox? = null
+    private var pluginSkillsCheckbox: JBCheckBox? = null
+    private var showEmojisCheckbox: JBCheckBox? = null
+
     private var mainPanel: JComponent? = null
 
     override fun getDisplayName(): String = "Quick Commands"
@@ -75,7 +89,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         loadCommands(globalTableModel!!, GlobalCommandSettings.getInstance().commands)
         tabbedPane.addTab(
             "Global Commands",
-            createCommandPanel(globalTableModel!!, "Visible in all projects", isGlobal = true)
+            createCommandPanel(globalTableModel!!, "Visible in all projects")
         )
 
         // Tab 2: Project Commands
@@ -83,12 +97,117 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         loadCommands(projectTableModel!!, ProjectCommandSettings.getInstance(project).commands)
         tabbedPane.addTab(
             "Project Commands",
-            createCommandPanel(projectTableModel!!, "Visible only in '${project.name}' project", isGlobal = false)
+            createCommandPanel(projectTableModel!!, "Visible only in '${project.name}' project")
         )
+
+        // Tab 3: Settings
+        tabbedPane.addTab("Settings", settingsTabOlustur())
 
         mainPanel = tabbedPane
         return tabbedPane
     }
+
+    // ── Settings Tab ────────────────────────────────────────────────────
+
+    private fun settingsTabOlustur(): JComponent {
+        val globalSettings = GlobalCommandSettings.getInstance()
+        val projectSettings = ProjectCommandSettings.getInstance(project)
+
+        val panel = JPanel()
+        panel.layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+        panel.border = JBUI.Borders.empty(12)
+
+        // ── Project Settings bolumu ──
+        val projectSection = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = BorderFactory.createTitledBorder("Project Settings")
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+
+        autoDetectCheckbox = JBCheckBox("Include auto-detected scripts (package.json, composer.json)").apply {
+            isSelected = projectSettings.autoDetectScripts
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+        projectSection.add(autoDetectCheckbox!!)
+
+        panel.add(projectSection)
+        panel.add(javax.swing.Box.createVerticalStrut(12))
+
+        // ── Global Settings bolumu ──
+        val globalSection = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = BorderFactory.createTitledBorder("Global Settings")
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+
+        claudeSkillsCheckbox = JBCheckBox("Include Claude Code skills and commands").apply {
+            isSelected = globalSettings.claudeSkillsEnabled
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+        globalSection.add(claudeSkillsCheckbox!!)
+
+        claudeDangerousCheckbox = JBCheckBox("Run with --dangerously-skip-permissions").apply {
+            isSelected = globalSettings.claudeSkillsDangerousMode
+            isEnabled = globalSettings.claudeSkillsEnabled
+            alignmentX = Component.LEFT_ALIGNMENT
+            border = JBUI.Borders.emptyLeft(20)
+        }
+        globalSection.add(claudeDangerousCheckbox!!)
+
+        pluginSkillsCheckbox = JBCheckBox("Include plugin skills").apply {
+            isSelected = globalSettings.pluginSkillsEnabled
+            isEnabled = globalSettings.claudeSkillsEnabled
+            alignmentX = Component.LEFT_ALIGNMENT
+            border = JBUI.Borders.emptyLeft(20)
+        }
+        globalSection.add(pluginSkillsCheckbox!!)
+
+        showEmojisCheckbox = JBCheckBox("Show emoji icons").apply {
+            isSelected = globalSettings.showEmojis
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+        globalSection.add(showEmojisCheckbox!!)
+
+        // Claude checkbox degistiginde alt checkbox'lari aktif/pasif yap
+        claudeSkillsCheckbox!!.addChangeListener {
+            val aktif = claudeSkillsCheckbox!!.isSelected
+            claudeDangerousCheckbox!!.isEnabled = aktif
+            pluginSkillsCheckbox!!.isEnabled = aktif
+        }
+
+        panel.add(globalSection)
+        panel.add(javax.swing.Box.createVerticalStrut(12))
+
+        // ── Import / Export bolumu ──
+        val importExportSection = JPanel().apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = BorderFactory.createTitledBorder("Import / Export (Global Commands)")
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+
+        val buttonPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
+
+        val exportButton = JButton("Export").apply {
+            addActionListener { showExportPopupFromButton(this) }
+        }
+        buttonPanel.add(exportButton)
+
+        val importButton = JButton("Import").apply {
+            addActionListener { showImportPopupFromButton(this) }
+        }
+        buttonPanel.add(importButton)
+
+        importExportSection.add(buttonPanel)
+
+        panel.add(importExportSection)
+
+        // Alt bosluk doldurucu
+        panel.add(javax.swing.Box.createVerticalGlue())
+
+        return panel
+    }
+
+    // ── Command Table ───────────────────────────────────────────────────
 
     private fun createTableModel(): DefaultTableModel {
         return object : DefaultTableModel(arrayOf("Name", "Command", "IsSeparator"), 0) {
@@ -112,18 +231,17 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     private fun createCommandPanel(
         tableModel: DefaultTableModel,
-        hint: String,
-        isGlobal: Boolean
+        hint: String
     ): JComponent {
         val table = JBTable(tableModel)
 
-        // IsSeparator sütununu görünümden gizle (data model'de kalıyor)
+        // IsSeparator sutununu gorunumden gizle (data model'de kaliyor)
         table.removeColumn(table.columnModel.getColumn(2))
 
         table.columnModel.getColumn(0).preferredWidth = 150
         table.columnModel.getColumn(1).preferredWidth = 400
 
-        // Separator satırları gri ve ortalı göster
+        // Separator satirlari gri ve ortali goster
         val separatorRenderer = object : DefaultTableCellRenderer() {
             override fun getTableCellRendererComponent(
                 table: JTable, value: Any?, isSelected: Boolean,
@@ -145,7 +263,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         table.columnModel.getColumn(0).cellRenderer = separatorRenderer
         table.columnModel.getColumn(1).cellRenderer = separatorRenderer
 
-        // Ctrl+Shift+S kısayolu ile separator ekleme
+        // Ctrl+Shift+S kisayolu ile separator ekleme
         val separatorShortcut = KeyStroke.getKeyStroke("control shift S")
 
         val toolbar = ToolbarDecorator.createDecorator(table)
@@ -191,7 +309,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 AllIcons.Actions.Rollback
             ) {
                 override fun actionPerformed(e: AnActionEvent) {
-                    if (isGlobal) {
+                    if (tableModel === globalTableModel) {
                         loadCommands(tableModel, GlobalCommandSettings.createDefaultCommands())
                     } else {
                         tableModel.rowCount = 0
@@ -199,31 +317,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 }
             })
 
-        // Global sekmede import/export butonlari
-        if (isGlobal) {
-            toolbar.addExtraAction(object : AnAction(
-                "Export",
-                "Export commands as JSON",
-                AllIcons.ToolbarDecorator.Export
-            ) {
-                override fun actionPerformed(e: AnActionEvent) {
-                    showExportPopup(tableModel, e)
-                }
-            })
-            toolbar.addExtraAction(object : AnAction(
-                "Import",
-                "Import commands from JSON",
-                AllIcons.ToolbarDecorator.Import
-            ) {
-                override fun actionPerformed(e: AnActionEvent) {
-                    showImportPopup(tableModel, table, e)
-                }
-            })
-        }
-
         val toolbarPanel = toolbar.createPanel()
 
-        // Separator kısayolunu tabloya kaydet
+        // Separator kisayolunu tabloya kaydet
         table.registerKeyboardAction(
             { addSeparatorRow(tableModel, table) },
             separatorShortcut,
@@ -247,6 +343,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         table.setRowSelectionInterval(insertAt, insertAt)
     }
 
+    // ── Persistence ─────────────────────────────────────────────────────
+
     override fun isModified(): Boolean {
         val globalModified = !commandsMatch(
             globalTableModel!!,
@@ -256,7 +354,18 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             projectTableModel!!,
             ProjectCommandSettings.getInstance(project).commands
         )
-        return globalModified || projectModified
+
+        val projectSettings = ProjectCommandSettings.getInstance(project)
+        val globalSettings = GlobalCommandSettings.getInstance()
+
+        val settingsModified =
+            autoDetectCheckbox?.isSelected != projectSettings.autoDetectScripts
+                    || claudeSkillsCheckbox?.isSelected != globalSettings.claudeSkillsEnabled
+                    || claudeDangerousCheckbox?.isSelected != globalSettings.claudeSkillsDangerousMode
+                    || pluginSkillsCheckbox?.isSelected != globalSettings.pluginSkillsEnabled
+                    || showEmojisCheckbox?.isSelected != globalSettings.showEmojis
+
+        return globalModified || projectModified || settingsModified
     }
 
     private fun commandsMatch(model: DefaultTableModel, commands: List<CommandEntry>): Boolean {
@@ -274,8 +383,18 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     }
 
     override fun apply() {
-        saveTableToSettings(globalTableModel!!, GlobalCommandSettings.getInstance().commands)
-        saveTableToSettings(projectTableModel!!, ProjectCommandSettings.getInstance(project).commands)
+        val globalSettings = GlobalCommandSettings.getInstance()
+        saveTableToSettings(globalTableModel!!, globalSettings.commands)
+
+        val projectSettings = ProjectCommandSettings.getInstance(project)
+        saveTableToSettings(projectTableModel!!, projectSettings.commands)
+
+        // Settings tab
+        projectSettings.autoDetectScripts = autoDetectCheckbox?.isSelected ?: true
+        globalSettings.claudeSkillsEnabled = claudeSkillsCheckbox?.isSelected ?: true
+        globalSettings.claudeSkillsDangerousMode = claudeDangerousCheckbox?.isSelected ?: false
+        globalSettings.pluginSkillsEnabled = pluginSkillsCheckbox?.isSelected ?: true
+        globalSettings.showEmojis = showEmojisCheckbox?.isSelected ?: true
     }
 
     private fun saveTableToSettings(model: DefaultTableModel, commands: MutableList<CommandEntry>) {
@@ -297,12 +416,28 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     override fun reset() {
         loadCommands(globalTableModel!!, GlobalCommandSettings.getInstance().commands)
         loadCommands(projectTableModel!!, ProjectCommandSettings.getInstance(project).commands)
+
+        val projectSettings = ProjectCommandSettings.getInstance(project)
+        val globalSettings = GlobalCommandSettings.getInstance()
+
+        autoDetectCheckbox?.isSelected = projectSettings.autoDetectScripts
+        claudeSkillsCheckbox?.isSelected = globalSettings.claudeSkillsEnabled
+        claudeDangerousCheckbox?.isSelected = globalSettings.claudeSkillsDangerousMode
+        claudeDangerousCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
+        pluginSkillsCheckbox?.isSelected = globalSettings.pluginSkillsEnabled
+        pluginSkillsCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
+        showEmojisCheckbox?.isSelected = globalSettings.showEmojis
     }
 
     override fun disposeUIResources() {
         mainPanel = null
         globalTableModel = null
         projectTableModel = null
+        autoDetectCheckbox = null
+        claudeSkillsCheckbox = null
+        claudeDangerousCheckbox = null
+        pluginSkillsCheckbox = null
+        showEmojisCheckbox = null
     }
 
     // ── Duplicate isim kontrolu ──────────────────────────────────────────
@@ -332,10 +467,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     /** Isim duzenlendiginde duplicate kontrol eden listener */
     private fun addDuplicateNameListener(model: DefaultTableModel) {
-        // Onceki degerleri saklamak icin
         var oncekiDegerler = mutableMapOf<Int, String>()
 
-        // Baslangic degerlerini kaydet
         for (i in 0 until model.rowCount) {
             val isSep = model.getValueAt(i, 2) as? Boolean ?: false
             if (!isSep) {
@@ -349,7 +482,6 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             override fun tableChanged(e: TableModelEvent) {
                 if (dinlemeyiAtla) return
                 if (e.type != TableModelEvent.UPDATE) {
-                    // Satir ekleme/silme durumunda onceki degerleri guncelle
                     oncekiDegerler.clear()
                     for (i in 0 until model.rowCount) {
                         val isSep = model.getValueAt(i, 2) as? Boolean ?: false
@@ -360,7 +492,6 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                     return
                 }
 
-                // Sadece isim sutunu (0) degistiginde kontrol et
                 if (e.column != 0) return
                 val satir = e.firstRow
                 if (satir < 0 || satir >= model.rowCount) return
@@ -390,24 +521,18 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     // ── Export islemleri ──────────────────────────────────────────────────
 
-    private fun showExportPopup(model: DefaultTableModel, e: AnActionEvent) {
+    private fun showExportPopupFromButton(component: JComponent) {
         val popup = JPopupMenu()
 
         val panoyaKopyala = JMenuItem("Copy to Clipboard")
-        panoyaKopyala.addActionListener { exportToClipboard(model) }
+        panoyaKopyala.addActionListener { exportToClipboard(globalTableModel!!) }
         popup.add(panoyaKopyala)
 
         val dosyayaKaydet = JMenuItem("Save to File")
-        dosyayaKaydet.addActionListener { exportToFile(model) }
+        dosyayaKaydet.addActionListener { exportToFile(globalTableModel!!) }
         popup.add(dosyayaKaydet)
 
-        val component = e.inputEvent?.component
-        if (component != null) {
-            popup.show(component, 0, component.height)
-        } else {
-            // Fallback: mainPanel uzerinde goster
-            mainPanel?.let { popup.show(it, it.width / 2, it.height / 2) }
-        }
+        popup.show(component, 0, component.height)
     }
 
     private fun exportCommandsToJson(model: DefaultTableModel): String {
@@ -452,23 +577,18 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
     // ── Import islemleri ──────────────────────────────────────────────────
 
-    private fun showImportPopup(model: DefaultTableModel, table: JBTable, e: AnActionEvent) {
+    private fun showImportPopupFromButton(component: JComponent) {
         val popup = JPopupMenu()
 
         val panodanYapistir = JMenuItem("Paste from Clipboard")
-        panodanYapistir.addActionListener { importFromClipboard(model, table) }
+        panodanYapistir.addActionListener { importFromClipboard(globalTableModel!!) }
         popup.add(panodanYapistir)
 
         val dosyadanYukle = JMenuItem("Load from File")
-        dosyadanYukle.addActionListener { importFromFile(model, table) }
+        dosyadanYukle.addActionListener { importFromFile(globalTableModel!!) }
         popup.add(dosyadanYukle)
 
-        val component = e.inputEvent?.component
-        if (component != null) {
-            popup.show(component, 0, component.height)
-        } else {
-            mainPanel?.let { popup.show(it, it.width / 2, it.height / 2) }
-        }
+        popup.show(component, 0, component.height)
     }
 
     private fun parseCommandsFromJson(json: String): List<ExportCommand>? {
@@ -480,27 +600,27 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         }
     }
 
-    private fun importFromClipboard(model: DefaultTableModel, table: JBTable) {
+    private fun importFromClipboard(model: DefaultTableModel) {
         val icerik = CopyPasteManager.getInstance().getContents<String>(DataFlavor.stringFlavor)
         if (icerik.isNullOrBlank()) {
             Messages.showWarningDialog("No valid content found in clipboard.", "Import Error")
             return
         }
-        processImport(icerik, model, table)
+        processImport(icerik, model)
     }
 
-    private fun importFromFile(model: DefaultTableModel, table: JBTable) {
+    private fun importFromFile(model: DefaultTableModel) {
         val dosyaSecici = JFileChooser()
         dosyaSecici.dialogTitle = "Load Commands"
         dosyaSecici.fileFilter = FileNameExtensionFilter("JSON File (*.json)", "json")
 
         if (dosyaSecici.showOpenDialog(mainPanel) == JFileChooser.APPROVE_OPTION) {
             val icerik = dosyaSecici.selectedFile.readText(Charsets.UTF_8)
-            processImport(icerik, model, table)
+            processImport(icerik, model)
         }
     }
 
-    private fun processImport(json: String, model: DefaultTableModel, table: JBTable) {
+    private fun processImport(json: String, model: DefaultTableModel) {
         val komutlar = parseCommandsFromJson(json)
         if (komutlar == null || komutlar.isEmpty()) {
             Messages.showWarningDialog(
@@ -510,15 +630,12 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             return
         }
 
-        // Onizleme dialog'u goster
         if (!showImportPreviewDialog(komutlar)) return
 
-        // Upsert uygula
         applyUpsert(komutlar, model)
-        table.clearSelection()
     }
 
-    /** Import onizleme dialog'u - kullaniciya iceri aktarilacak komutlari gosterir */
+    /** Import onizleme dialog'u */
     private fun showImportPreviewDialog(komutlar: List<ExportCommand>): Boolean {
         val dialog = object : DialogWrapper(project, false) {
             init {
@@ -567,7 +684,6 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 val komut = cmd.command ?: ""
                 if (isim.isBlank() && komut.isBlank()) return@forEach
 
-                // Ayni isimli satir var mi kontrol et
                 var mevcutSatir = -1
                 for (i in 0 until model.rowCount) {
                     val isSep = model.getValueAt(i, 2) as? Boolean ?: false
@@ -581,10 +697,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                 }
 
                 if (mevcutSatir >= 0) {
-                    // Guncelle
                     model.setValueAt(komut, mevcutSatir, 1)
                 } else {
-                    // Yeni ekle
                     model.addRow(arrayOf(isim, komut, false))
                 }
             }

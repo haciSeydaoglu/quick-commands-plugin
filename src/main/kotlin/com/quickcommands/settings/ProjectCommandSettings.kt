@@ -19,6 +19,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class ProjectCommandSettings : PersistentStateComponent<ProjectCommandSettings> {
 
     var commands: MutableList<CommandEntry> = mutableListOf()
+    var autoDetectScripts: Boolean = true
 
     companion object {
         fun getInstance(project: Project): ProjectCommandSettings {

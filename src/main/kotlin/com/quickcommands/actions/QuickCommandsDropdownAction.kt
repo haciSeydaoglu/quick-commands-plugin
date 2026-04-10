@@ -6,6 +6,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAware
+import com.quickcommands.services.ClaudeSkillCategory
+import com.quickcommands.services.ClaudeSkillDetectionService
+import com.quickcommands.services.ClaudeSkillGroup
+import com.quickcommands.services.DetectedScriptGroup
+import com.quickcommands.services.ScriptDetectionService
+import com.quickcommands.services.ScriptDetectionService.Companion.emojiEslestir
 import com.quickcommands.settings.GlobalCommandSettings
 import com.quickcommands.settings.ProjectCommandSettings
 
@@ -50,6 +56,29 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
             }
         }
 
+        // Otomatik tespit edilen scriptler (package.json, composer.json)
+        val projectSettings = ProjectCommandSettings.getInstance(project)
+        val globalSettings = GlobalCommandSettings.getInstance()
+        if (projectSettings.autoDetectScripts) {
+            val service = ScriptDetectionService.getInstance(project)
+            val gruplar = service.getDetectedScripts()
+            if (gruplar.isNotEmpty()) {
+                actions.add(Separator.create("Scripts"))
+                scriptMenuOlustur(gruplar, actions, globalSettings.showEmojis)
+            }
+        }
+
+        // Claude Skills & Commands
+        if (globalSettings.claudeSkillsEnabled) {
+            val claudeService = ClaudeSkillDetectionService.getInstance(project)
+            val skillGruplar = claudeService.getDetectedSkills()
+                .filter { globalSettings.pluginSkillsEnabled || it.category != ClaudeSkillCategory.PLUGIN }
+            if (skillGruplar.isNotEmpty()) {
+                actions.add(Separator.create("Claude"))
+                claudeMenuOlustur(skillGruplar, actions, globalSettings)
+            }
+        }
+
         // Settings link
         actions.add(Separator.create())
         actions.add(OpenSettingsAction())
@@ -61,6 +90,92 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
         e.presentation.isPopupGroup = true
         e.presentation.text = "Quick Commands"
         e.presentation.description = "Run predefined terminal commands"
+    }
+
+    /**
+     * Tespit edilen script gruplarini klasor bazli separator basliklariyla menuye ekler.
+     * Her package.json/composer.json bir submenu olarak gosterilir.
+     * Root gruplar dogrudan "Scripts" altinda, alt klasordekiler ust klasor adina gore gruplanir.
+     */
+    private fun scriptMenuOlustur(gruplar: List<DetectedScriptGroup>, actions: MutableList<AnAction>, emojiGoster: Boolean) {
+        // Root gruplari duz liste olarak dogrudan ekle
+        gruplar.filter { it.relativePath == "root" }.forEach { grup ->
+            grup.scripts.forEach { script ->
+                actions.add(RunCommandAction(
+                    scriptEtiketOlustur(script.name, emojiGoster),
+                    script.command,
+                    "detected-${grup.type.name}-root-${script.name}"
+                ))
+            }
+        }
+
+        // Alt klasordeki gruplari ilk klasor adina gore grupla, submenu olarak ekle
+        val altKlasorGruplari = gruplar
+            .filter { it.relativePath != "root" }
+            .groupBy { it.relativePath.substringBefore("/") }
+
+        for ((ustKlasor, altGruplar) in altKlasorGruplari) {
+            actions.add(Separator.create(ustKlasor))
+            altGruplar.forEach { grup ->
+                val kisaYol = if (grup.relativePath.contains("/")) {
+                    grup.relativePath.substringAfter("/")
+                } else {
+                    grup.relativePath
+                }
+                actions.add(scriptGrupSubmenu(grup, kisaYol, emojiGoster))
+            }
+        }
+    }
+
+    /** Script adi icin emoji prefix ekler (ayara bagli) */
+    private fun scriptEtiketOlustur(ad: String, emojiGoster: Boolean): String {
+        return if (emojiGoster) "${emojiEslestir(ad)} $ad" else ad
+    }
+
+    /** Tek bir script grubu icin submenu olusturur */
+    private fun scriptGrupSubmenu(grup: DetectedScriptGroup, etiket: String, emojiGoster: Boolean): DefaultActionGroup {
+        val altMenu = DefaultActionGroup("${grup.type.displayPrefix}: $etiket", true)
+        grup.scripts.forEach { script ->
+            altMenu.add(RunCommandAction(
+                scriptEtiketOlustur(script.name, emojiGoster),
+                script.command,
+                "detected-${grup.type.name}-${grup.relativePath}-${script.name}"
+            ))
+        }
+        return altMenu
+    }
+
+    /** Claude skill gruplarini kategoriye gore menuye ekler */
+    private fun claudeMenuOlustur(
+        gruplar: List<ClaudeSkillGroup>,
+        actions: MutableList<AnAction>,
+        globalSettings: GlobalCommandSettings
+    ) {
+        val onEk = if (globalSettings.claudeSkillsDangerousMode) {
+            "claude --dangerously-skip-permissions"
+        } else {
+            "claude"
+        }
+
+        for (grup in gruplar) {
+            if (gruplar.size > 1) {
+                actions.add(Separator.create(grup.category.displayName))
+            }
+            grup.skills.forEach { skill ->
+                val komut = "$onEk ${skill.slashCommand}"
+                val etiket = if (globalSettings.showEmojis) {
+                    val emoji = emojiEslestir(skill.name)
+                    "$emoji ${skill.slashCommand}"
+                } else {
+                    skill.slashCommand
+                }
+                actions.add(RunCommandAction(
+                    etiket,
+                    komut,
+                    "claude-${skill.name}"
+                ))
+            }
+        }
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

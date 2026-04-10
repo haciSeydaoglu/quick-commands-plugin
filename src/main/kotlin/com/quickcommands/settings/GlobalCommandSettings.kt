@@ -22,6 +22,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {
 
     var commands: MutableList<CommandEntry> = createDefaultCommands()
+    var claudeSkillsEnabled: Boolean = true
+    var claudeSkillsDangerousMode: Boolean = false
+    var pluginSkillsEnabled: Boolean = true
+    var showEmojis: Boolean = true
 
     companion object {
         fun getInstance(): GlobalCommandSettings {
