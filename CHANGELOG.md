@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.1]
+- Update CLAUDE.md with new architecture documentation (services layer, three-tab UI, updated tech stack)
+- Update README.md with Claude Skills feature documentation and corrected settings references
+- Update plugin.xml description with auto-detect scripts, Claude skills, and import/export features
+- Remove emoji characters from plugin.xml description headings
+
 ## [1.5.0]
 - Auto-detect scripts from package.json and composer.json files in the project
 - Supports monorepo structures: nested package.json files grouped by folder with submenus

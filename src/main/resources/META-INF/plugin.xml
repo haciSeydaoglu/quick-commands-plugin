@@ -11,17 +11,21 @@
         <code>docker-compose up</code>, or any custom script.
         <br><br>
 
-        <b>✨ Key Features:</b>
+        <b>Key Features:</b>
         <ul>
             <li><b>One-Click Execution</b> - Run commands directly from the Terminal toolbar dropdown</li>
             <li><b>Global Commands</b> - Define commands that are available across all your projects</li>
             <li><b>Project Commands</b> - Set up project-specific commands stored in your project settings</li>
+            <li><b>Auto-detect Scripts</b> - Discovers scripts from <code>package.json</code> and <code>composer.json</code> with monorepo support</li>
+            <li><b>Claude Skills</b> - Auto-detect Claude Code skills, commands, and plugins</li>
+            <li><b>Package Manager Detection</b> - Detects npm, yarn, pnpm, or bun based on lock files</li>
             <li><b>Keyboard Shortcut</b> - Quick access via <code>Ctrl+Alt+T</code> (customizable)</li>
-            <li><b>Simple Configuration</b> - Easy-to-use settings UI under Tools > Quick Commands</li>
+            <li><b>Import / Export</b> - Share your global commands as JSON</li>
+            <li><b>Simple Configuration</b> - Easy-to-use three-tab settings UI under Tools > Quick Commands</li>
         </ul>
         <br>
 
-        <b>🚀 Getting Started:</b>
+        <b>Getting Started:</b>
         <ol>
             <li>Open <b>Settings > Tools > Quick Commands</b></li>
             <li>Add your commands (e.g., "Build" → <code>./gradlew build</code>)</li>
@@ -29,7 +33,7 @@
         </ol>
         <br>
 
-        <b>💡 Use Cases:</b>
+        <b>Use Cases:</b>
         <ul>
             <li>Build and run scripts (<code>npm start</code>, <code>gradle build</code>)</li>
             <li>Git operations (<code>git pull</code>, <code>git push</code>)</li>

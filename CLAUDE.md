@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Quick Commands is an IntelliJ plugin that enables quick terminal command execution within JetBrains IDEs. It provides a dropdown menu in the Terminal toolbar for single-click access to predefined commands, with support for both global (all projects) and project-specific commands.
+Quick Commands is an IntelliJ plugin that enables quick terminal command execution within JetBrains IDEs. It provides a dropdown menu in the Terminal toolbar for single-click access to predefined commands, with support for both global (all projects) and project-specific commands. It also auto-detects scripts from `package.json` and `composer.json` files (with monorepo support), and discovers Claude Code skills and commands.
 
 ## Build Commands
 
@@ -28,6 +28,7 @@ Quick Commands is an IntelliJ plugin that enables quick terminal command executi
 src/main/kotlin/com/quickcommands/
 ├── settings/     # Persistent settings (global + project level)
 ├── actions/      # UI actions (dropdown, shortcuts, execution)
+├── services/     # Auto-detection services (scripts, Claude skills)
 └── util/         # Terminal execution utility
 ```
 
@@ -37,7 +38,7 @@ src/main/kotlin/com/quickcommands/
 - `CommandEntry` - Data model with name, command, UUID id
 - `GlobalCommandSettings` - Application-level settings (stored in `terminalCommanderGlobal.xml`)
 - `ProjectCommandSettings` - Project-level settings (stored in `terminalCommander.xml`)
-- `QuickCommandsConfigurable` - Two-tab settings UI (Global/Project commands)
+- `QuickCommandsConfigurable` - Three-tab settings UI (Global/Project commands + Settings)
 
 **Actions Layer:**
 - `QuickCommandsDropdownAction` - Main dropdown menu in Terminal toolbar
@@ -45,12 +46,16 @@ src/main/kotlin/com/quickcommands/
 - `RunCommandAction` - Individual command executor
 - `OpenSettingsAction` - Settings link action
 
+**Services Layer:**
+- `ScriptDetectionService` - Auto-detects scripts from `package.json` and `composer.json` with monorepo support
+- `ClaudeSkillDetectionService` - Discovers Claude Code skills and commands (global, project, plugins)
+
 **Utility Layer:**
 - `TerminalExecutor` - Creates new terminal tab and executes commands via `TerminalToolWindowManager`
 
 ### Service Pattern
 
-Both settings classes implement `PersistentStateComponent` for XML serialization:
+Settings classes implement `PersistentStateComponent` for XML serialization, detection services are `@Service(Service.Level.PROJECT)` with file watcher-based cache invalidation:
 - Global settings: `ApplicationManager.getApplication().getService()`
 - Project settings: `project.getService()`
 
@@ -64,8 +69,8 @@ Both settings classes implement `PersistentStateComponent` for XML serialization
 
 | Component | Version |
 |-----------|---------|
-| Kotlin | 1.9.25 |
-| Gradle | 8.10 |
+| Kotlin | 2.0.21 |
+| Gradle | 9.0 |
 | IntelliJ Platform SDK | 2024.2 |
 | Java Toolchain | 21 |
 | Supported IDE Range | 2024.2 - 2025.3.* |
@@ -76,7 +81,9 @@ Both settings classes implement `PersistentStateComponent` for XML serialization
 |------|---------|
 | `plugin.xml` | Plugin descriptor, actions, services, extensions |
 | `build.gradle.kts` | Build configuration, dependencies |
-| `QuickCommandsConfigurable.kt` | Settings UI (162 lines) |
+| `QuickCommandsConfigurable.kt` | Settings UI with three tabs |
+| `ScriptDetectionService.kt` | package.json/composer.json script auto-detection |
+| `ClaudeSkillDetectionService.kt` | Claude Code skill/command discovery |
 | `TerminalExecutor.kt` | Terminal integration |
 
 ## Sürüm Yönetimi (Semantic Versioning)

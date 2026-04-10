@@ -13,7 +13,8 @@ A quick terminal command execution plugin for JetBrains IDEs (IntelliJ IDEA, Php
 - **Keyboard Shortcut** - Quick access popup via `Ctrl+Alt+T` (customizable) with speed search
 - **Import / Export** - Share your global commands as JSON (clipboard or file)
 - **Separators** - Organize commands with visual divider lines
-- **Easy Configuration** - User-friendly two-tab settings interface
+- **Claude Skills** - Auto-detect Claude Code skills and commands (global, project, plugins)
+- **Easy Configuration** - User-friendly three-tab settings interface (Global, Project, Settings)
 
 ## Installation
 
@@ -63,11 +64,15 @@ Quick Commands automatically discovers scripts from `package.json` and `composer
   > npm: root          -> [dev, build, test, lint]
   > yarn: packages/web -> [dev, build, start]
   > composer: root     -> [test, lint, analyse]
+── Claude ──
+  /commit
+  /review-pr
+  /my-plugin:deploy
 ──────────
   Settings...
 ```
 
-- Enabled by default. Disable via **Settings** > **Tools** > **Quick Commands** > **Project Commands** tab
+- Enabled by default. Disable via **Settings** > **Tools** > **Quick Commands** > **Settings** tab
 - Lock file detection: `yarn.lock` -> yarn, `pnpm-lock.yaml` -> pnpm, `bun.lockb` -> bun, fallback -> npm
 - Composer event hooks (`post-install-cmd`, etc.) are filtered out automatically
 - Cache is invalidated when relevant files change
@@ -78,10 +83,11 @@ Quick Commands automatically discovers scripts from `package.json` and `composer
 
 | Tab | Description |
 |-----|-------------|
-| **Global Commands** | Commands visible in all projects. Supports import/export as JSON. |
-| **Project Commands** | Commands visible only in this project. Includes the auto-detect scripts toggle. |
+| **Global Commands** | Commands visible in all projects. |
+| **Project Commands** | Commands visible only in this project. |
+| **Settings** | Auto-detect scripts toggle, Claude skills options, emoji display, import/export for global commands. |
 
-**Toolbar actions:** Add, Remove, Move Up/Down, Add Separator (`Ctrl+Shift+S`), Reset to Defaults, Export, Import (global tab only).
+**Toolbar actions:** Add, Remove, Move Up/Down, Add Separator (`Ctrl+Shift+S`), Reset to Defaults.
 
 ## Requirements
 
