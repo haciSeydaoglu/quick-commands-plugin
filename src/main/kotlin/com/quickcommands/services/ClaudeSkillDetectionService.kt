@@ -69,49 +69,24 @@ class ClaudeSkillDetectionService(private val project: Project) {
     private fun tara(): List<ClaudeSkillGroup> {
         val gruplar = mutableListOf<ClaudeSkillGroup>()
 
-        // 1. Proje commands (.claude/commands/)
-        val projeCommandler = projeCommandlariTara()
-        if (projeCommandler.isNotEmpty()) {
-            gruplar.add(ClaudeSkillGroup(
-                category = ClaudeSkillCategory.PROJECT_COMMAND,
-                skills = projeCommandler
-            ))
+        // 1. Global (commands + skills birlesik, alfabetik)
+        val globalHepsi = (globalCommandlariTara() + globalSkilleriTara())
+            .sortedBy { it.name.lowercase() }
+        if (globalHepsi.isNotEmpty()) {
+            gruplar.add(ClaudeSkillGroup(category = ClaudeSkillCategory.GLOBAL, skills = globalHepsi))
         }
 
-        // 2. Proje skills (.claude/skills/)
-        val projeSkiller = projeSkilleriTara()
-        if (projeSkiller.isNotEmpty()) {
-            gruplar.add(ClaudeSkillGroup(
-                category = ClaudeSkillCategory.PROJECT_SKILL,
-                skills = projeSkiller
-            ))
-        }
-
-        // 3. Global commands (~/.claude/commands/)
-        val globalCommandler = globalCommandlariTara()
-        if (globalCommandler.isNotEmpty()) {
-            gruplar.add(ClaudeSkillGroup(
-                category = ClaudeSkillCategory.GLOBAL_COMMAND,
-                skills = globalCommandler
-            ))
-        }
-
-        // 4. Global skills (~/.claude/skills/)
-        val globalSkiller = globalSkilleriTara()
-        if (globalSkiller.isNotEmpty()) {
-            gruplar.add(ClaudeSkillGroup(
-                category = ClaudeSkillCategory.GLOBAL_SKILL,
-                skills = globalSkiller
-            ))
-        }
-
-        // 5. Plugin skills (~/.claude/plugins/cache/)
-        val pluginSkiller = pluginSkilleriTara()
+        // 2. Plugins (alfabetik)
+        val pluginSkiller = pluginSkilleriTara().sortedBy { it.name.lowercase() }
         if (pluginSkiller.isNotEmpty()) {
-            gruplar.add(ClaudeSkillGroup(
-                category = ClaudeSkillCategory.PLUGIN,
-                skills = pluginSkiller
-            ))
+            gruplar.add(ClaudeSkillGroup(category = ClaudeSkillCategory.PLUGIN, skills = pluginSkiller))
+        }
+
+        // 3. Project (commands + skills birlesik, alfabetik)
+        val projeHepsi = (projeCommandlariTara() + projeSkilleriTara())
+            .sortedBy { it.name.lowercase() }
+        if (projeHepsi.isNotEmpty()) {
+            gruplar.add(ClaudeSkillGroup(category = ClaudeSkillCategory.PROJECT, skills = projeHepsi))
         }
 
         return gruplar
@@ -243,11 +218,9 @@ class ClaudeSkillDetectionService(private val project: Project) {
 
 /** Claude skill kategorisi */
 enum class ClaudeSkillCategory(val displayName: String) {
-    PROJECT_COMMAND("Project Commands"),
-    PROJECT_SKILL("Project Skills"),
-    GLOBAL_COMMAND("Global Commands"),
-    GLOBAL_SKILL("Global Skills"),
-    PLUGIN("Plugins")
+    GLOBAL("Global"),
+    PLUGIN("Plugins"),
+    PROJECT("Project")
 }
 
 /** Bir kategorideki skill grubu */

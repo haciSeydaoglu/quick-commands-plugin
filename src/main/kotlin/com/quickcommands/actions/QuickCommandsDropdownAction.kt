@@ -74,7 +74,6 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
             val skillGruplar = claudeService.getDetectedSkills()
                 .filter { globalSettings.pluginSkillsEnabled || it.category != ClaudeSkillCategory.PLUGIN }
             if (skillGruplar.isNotEmpty()) {
-                actions.add(Separator.create("Claude"))
                 claudeMenuOlustur(skillGruplar, actions, globalSettings)
             }
         }
@@ -158,9 +157,7 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
         }
 
         for (grup in gruplar) {
-            if (gruplar.size > 1) {
-                actions.add(Separator.create(grup.category.displayName))
-            }
+            actions.add(Separator.create("Claude: ${grup.category.displayName}"))
             grup.skills.forEach { skill ->
                 val komut = "$onEk ${skill.slashCommand}"
                 val etiket = if (globalSettings.showEmojis) {

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.3]
+- Simplify Claude skill categories: merge commands and skills into unified groups (Global, Plugin, Project)
+- Sort skills alphabetically within each category group
+- Add "Claude:" prefix to skill group separator labels for clarity
+
+## [1.5.2]
+- Reorder Claude skill groups: global and plugin skills now appear before project-specific skills in the dropdown menu
+
 ## [1.5.1]
 - Update CLAUDE.md with new architecture documentation (services layer, three-tab UI, updated tech stack)
 - Update README.md with Claude Skills feature documentation and corrected settings references
