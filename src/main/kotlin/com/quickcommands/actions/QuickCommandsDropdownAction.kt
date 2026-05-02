@@ -38,7 +38,7 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
                 if (cmd.separator) {
                     actions.add(Separator.create())
                 } else {
-                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id, cmd.askTitleOnRun))
                 }
             }
         }
@@ -51,7 +51,7 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
                 if (cmd.separator) {
                     actions.add(Separator.create())
                 } else {
-                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id))
+                    actions.add(RunCommandAction(cmd.name, cmd.command, cmd.id, cmd.askTitleOnRun))
                 }
             }
         }

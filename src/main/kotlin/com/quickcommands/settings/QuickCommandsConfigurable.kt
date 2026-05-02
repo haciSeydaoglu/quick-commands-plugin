@@ -64,7 +64,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private data class ExportCommand(
         val name: String? = null,
         val command: String? = null,
-        val separator: Boolean = false
+        val separator: Boolean = false,
+        val askTitleOnRun: Boolean = false
     )
 
     private var globalTableModel: DefaultTableModel? = null
@@ -210,10 +211,16 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     // ── Command Table ───────────────────────────────────────────────────
 
     private fun createTableModel(): DefaultTableModel {
-        return object : DefaultTableModel(arrayOf("Name", "Command", "IsSeparator"), 0) {
+        return object : DefaultTableModel(arrayOf("Name", "Command", "IsSeparator", "Ask Title"), 0) {
             override fun isCellEditable(row: Int, column: Int): Boolean {
                 val isSep = getValueAt(row, 2) as? Boolean ?: false
-                return !isSep && column < 2
+                if (isSep) return false
+                // 0 = Name, 1 = Command, 3 = Ask Title (checkbox); 2 = IsSeparator gizli
+                return column == 0 || column == 1 || column == 3
+            }
+
+            override fun getColumnClass(column: Int): Class<*> {
+                return if (column == 3) java.lang.Boolean::class.java else String::class.java
             }
         }
     }
@@ -222,9 +229,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         model.rowCount = 0
         commands.forEach { cmd ->
             if (cmd.separator) {
-                model.addRow(arrayOf(SEPARATOR_DISPLAY, "", true))
+                model.addRow(arrayOf(SEPARATOR_DISPLAY, "", true, false))
             } else {
-                model.addRow(arrayOf(cmd.name, cmd.command, false))
+                model.addRow(arrayOf(cmd.name, cmd.command, false, cmd.askTitleOnRun))
             }
         }
     }
@@ -236,10 +243,13 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         val table = JBTable(tableModel)
 
         // IsSeparator sutununu gorunumden gizle (data model'de kaliyor)
+        // removeColumn sonrası: view 0=Name, view 1=Command, view 2=Ask Title (model 3)
         table.removeColumn(table.columnModel.getColumn(2))
 
         table.columnModel.getColumn(0).preferredWidth = 150
         table.columnModel.getColumn(1).preferredWidth = 400
+        table.columnModel.getColumn(2).preferredWidth = 80
+        table.columnModel.getColumn(2).maxWidth = 100
 
         // Separator satirlari gri ve ortali goster
         val separatorRenderer = object : DefaultTableCellRenderer() {
@@ -263,13 +273,37 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         table.columnModel.getColumn(0).cellRenderer = separatorRenderer
         table.columnModel.getColumn(1).cellRenderer = separatorRenderer
 
+        // Ask Title sütunu: separator satırlarında boş, diğerlerinde checkbox
+        val askTitleRenderer = object : DefaultTableCellRenderer() {
+            private val checkboxKomponent = JBCheckBox().apply {
+                horizontalAlignment = javax.swing.SwingConstants.CENTER
+                isBorderPainted = false
+            }
+
+            override fun getTableCellRendererComponent(
+                table: JTable, value: Any?, isSelected: Boolean,
+                hasFocus: Boolean, row: Int, column: Int
+            ): Component {
+                val isSep = tableModel.getValueAt(row, 2) as? Boolean ?: false
+                if (isSep) {
+                    val comp = super.getTableCellRendererComponent(table, "", isSelected, hasFocus, row, column)
+                    background = if (isSelected) table.selectionBackground else table.background
+                    return comp
+                }
+                checkboxKomponent.isSelected = (value as? Boolean) ?: false
+                checkboxKomponent.background = if (isSelected) table.selectionBackground else table.background
+                return checkboxKomponent
+            }
+        }
+        table.columnModel.getColumn(2).cellRenderer = askTitleRenderer
+
         // Ctrl+Shift+S kisayolu ile separator ekleme
         val separatorShortcut = KeyStroke.getKeyStroke("control shift S")
 
         val toolbar = ToolbarDecorator.createDecorator(table)
             .setAddAction {
                 val uniqueName = generateUniqueName(tableModel, "New Command")
-                tableModel.addRow(arrayOf(uniqueName, "", false))
+                tableModel.addRow(arrayOf(uniqueName, "", false, false))
                 val row = tableModel.rowCount - 1
                 table.editCellAt(row, 0)
                 table.setRowSelectionInterval(row, row)
@@ -339,7 +373,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun addSeparatorRow(tableModel: DefaultTableModel, table: JBTable) {
         val selectedRow = table.selectedRow
         val insertAt = if (selectedRow >= 0) selectedRow + 1 else tableModel.rowCount
-        tableModel.insertRow(insertAt, arrayOf(SEPARATOR_DISPLAY, "", true))
+        tableModel.insertRow(insertAt, arrayOf(SEPARATOR_DISPLAY, "", true, false))
         table.setRowSelectionInterval(insertAt, insertAt)
     }
 
@@ -376,7 +410,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             if (!isSep) {
                 val name = model.getValueAt(i, 0) as? String ?: ""
                 val command = model.getValueAt(i, 1) as? String ?: ""
-                if (commands[i].name != name || commands[i].command != command) return false
+                val askTitle = model.getValueAt(i, 3) as? Boolean ?: false
+                if (commands[i].name != name || commands[i].command != command
+                    || commands[i].askTitleOnRun != askTitle) return false
             }
         }
         return true
@@ -406,8 +442,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             } else {
                 val name = model.getValueAt(i, 0) as? String ?: ""
                 val command = model.getValueAt(i, 1) as? String ?: ""
+                val askTitle = model.getValueAt(i, 3) as? Boolean ?: false
                 if (name.isNotBlank() || command.isNotBlank()) {
-                    commands.add(CommandEntry(name, command))
+                    commands.add(CommandEntry(name = name, command = command, askTitleOnRun = askTitle))
                 }
             }
         }
@@ -544,8 +581,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             } else {
                 val name = model.getValueAt(i, 0) as? String ?: ""
                 val command = model.getValueAt(i, 1) as? String ?: ""
+                val askTitle = model.getValueAt(i, 3) as? Boolean ?: false
                 if (name.isNotBlank() || command.isNotBlank()) {
-                    komutlar.add(ExportCommand(name = name, command = command))
+                    komutlar.add(ExportCommand(name = name, command = command, askTitleOnRun = askTitle))
                 }
             }
         }
@@ -678,7 +716,7 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private fun applyUpsert(komutlar: List<ExportCommand>, model: DefaultTableModel) {
         komutlar.forEach { cmd ->
             if (cmd.separator) {
-                model.addRow(arrayOf(SEPARATOR_DISPLAY, "", true))
+                model.addRow(arrayOf(SEPARATOR_DISPLAY, "", true, false))
             } else {
                 val isim = cmd.name?.trim() ?: ""
                 val komut = cmd.command ?: ""
@@ -698,8 +736,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
 
                 if (mevcutSatir >= 0) {
                     model.setValueAt(komut, mevcutSatir, 1)
+                    model.setValueAt(cmd.askTitleOnRun, mevcutSatir, 3)
                 } else {
-                    model.addRow(arrayOf(isim, komut, false))
+                    model.addRow(arrayOf(isim, komut, false, cmd.askTitleOnRun))
                 }
             }
         }

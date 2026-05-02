@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.6.0]
+- Added per-command "Ask Title" option: when enabled, a prompt appears at run time asking for a custom tab title
+- The final tab title becomes "<command name> — <input>"; leaving the input empty falls back to the command name; pressing Cancel/ESC aborts the run
+- Useful when running multiple parallel sessions of the same command (e.g. several `claude` tabs) so each tab can be labeled with its task
+
 ## [1.5.3]
 - Simplify Claude skill categories: merge commands and skills into unified groups (Global, Plugin, Project)
 - Sort skills alphabetically within each category group
