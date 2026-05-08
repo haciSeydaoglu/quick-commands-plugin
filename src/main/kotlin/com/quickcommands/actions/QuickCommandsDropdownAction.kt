@@ -9,6 +9,8 @@ import com.intellij.openapi.project.DumbAware
 import com.quickcommands.services.ClaudeSkillCategory
 import com.quickcommands.services.ClaudeSkillDetectionService
 import com.quickcommands.services.ClaudeSkillGroup
+import com.quickcommands.services.CodexSkillDetectionService
+import com.quickcommands.services.CodexSkillGroup
 import com.quickcommands.services.DetectedScriptGroup
 import com.quickcommands.services.ScriptDetectionService
 import com.quickcommands.services.ScriptDetectionService.Companion.emojiEslestir
@@ -75,6 +77,15 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
                 .filter { globalSettings.pluginSkillsEnabled || it.category != ClaudeSkillCategory.PLUGIN }
             if (skillGruplar.isNotEmpty()) {
                 claudeMenuOlustur(skillGruplar, actions, globalSettings)
+            }
+        }
+
+        // Codex Skills
+        if (globalSettings.codexSkillsEnabled) {
+            val codexService = CodexSkillDetectionService.getInstance(project)
+            val codexGruplar = codexService.getDetectedSkills()
+            if (codexGruplar.isNotEmpty()) {
+                codexMenuOlustur(codexGruplar, actions, globalSettings)
             }
         }
 
@@ -170,6 +181,38 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
                     etiket,
                     komut,
                     "claude-${skill.name}"
+                ))
+            }
+        }
+    }
+
+    /** Codex skill gruplarini kategoriye gore menuye ekler */
+    private fun codexMenuOlustur(
+        gruplar: List<CodexSkillGroup>,
+        actions: MutableList<AnAction>,
+        globalSettings: GlobalCommandSettings
+    ) {
+        val onEk = if (globalSettings.codexSkillsDangerousMode) {
+            "codex --yolo"
+        } else {
+            "codex"
+        }
+
+        for (grup in gruplar) {
+            actions.add(Separator.create("Codex: ${grup.category.displayName}"))
+            grup.skills.forEach { skill ->
+                // Tek tirnak: shell $skill-ad'ini env var olarak expand etmesin
+                val komut = "$onEk '${skill.invokeToken}'"
+                val etiket = if (globalSettings.showEmojis) {
+                    val emoji = emojiEslestir(skill.name)
+                    "$emoji ${skill.invokeToken}"
+                } else {
+                    skill.invokeToken
+                }
+                actions.add(RunCommandAction(
+                    etiket,
+                    komut,
+                    "codex-${skill.name}"
                 ))
             }
         }

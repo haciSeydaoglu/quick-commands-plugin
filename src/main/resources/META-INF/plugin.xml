@@ -74,6 +74,10 @@
         <!-- Claude skill detection service (Project level) -->
         <projectService
                 serviceImplementation="com.quickcommands.services.ClaudeSkillDetectionService"/>
+
+        <!-- Codex skill detection service (Project level) -->
+        <projectService
+                serviceImplementation="com.quickcommands.services.CodexSkillDetectionService"/>
     </extensions>
 
     <actions>

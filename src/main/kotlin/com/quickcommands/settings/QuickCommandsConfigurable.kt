@@ -76,6 +76,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private var claudeSkillsCheckbox: JBCheckBox? = null
     private var claudeDangerousCheckbox: JBCheckBox? = null
     private var pluginSkillsCheckbox: JBCheckBox? = null
+    private var codexSkillsCheckbox: JBCheckBox? = null
+    private var codexDangerousCheckbox: JBCheckBox? = null
     private var showEmojisCheckbox: JBCheckBox? = null
 
     private var mainPanel: JComponent? = null
@@ -163,6 +165,20 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         }
         globalSection.add(pluginSkillsCheckbox!!)
 
+        codexSkillsCheckbox = JBCheckBox("Include Codex CLI skills").apply {
+            isSelected = globalSettings.codexSkillsEnabled
+            alignmentX = Component.LEFT_ALIGNMENT
+        }
+        globalSection.add(codexSkillsCheckbox!!)
+
+        codexDangerousCheckbox = JBCheckBox("Run with --yolo (skip approvals)").apply {
+            isSelected = globalSettings.codexSkillsDangerousMode
+            isEnabled = globalSettings.codexSkillsEnabled
+            alignmentX = Component.LEFT_ALIGNMENT
+            border = JBUI.Borders.emptyLeft(20)
+        }
+        globalSection.add(codexDangerousCheckbox!!)
+
         showEmojisCheckbox = JBCheckBox("Show emoji icons").apply {
             isSelected = globalSettings.showEmojis
             alignmentX = Component.LEFT_ALIGNMENT
@@ -174,6 +190,11 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             val aktif = claudeSkillsCheckbox!!.isSelected
             claudeDangerousCheckbox!!.isEnabled = aktif
             pluginSkillsCheckbox!!.isEnabled = aktif
+        }
+
+        // Codex checkbox degistiginde alt checkbox'i aktif/pasif yap
+        codexSkillsCheckbox!!.addChangeListener {
+            codexDangerousCheckbox!!.isEnabled = codexSkillsCheckbox!!.isSelected
         }
 
         panel.add(globalSection)
@@ -397,6 +418,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                     || claudeSkillsCheckbox?.isSelected != globalSettings.claudeSkillsEnabled
                     || claudeDangerousCheckbox?.isSelected != globalSettings.claudeSkillsDangerousMode
                     || pluginSkillsCheckbox?.isSelected != globalSettings.pluginSkillsEnabled
+                    || codexSkillsCheckbox?.isSelected != globalSettings.codexSkillsEnabled
+                    || codexDangerousCheckbox?.isSelected != globalSettings.codexSkillsDangerousMode
                     || showEmojisCheckbox?.isSelected != globalSettings.showEmojis
 
         return globalModified || projectModified || settingsModified
@@ -428,8 +451,10 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         // Settings tab
         projectSettings.autoDetectScripts = autoDetectCheckbox?.isSelected ?: true
         globalSettings.claudeSkillsEnabled = claudeSkillsCheckbox?.isSelected ?: true
-        globalSettings.claudeSkillsDangerousMode = claudeDangerousCheckbox?.isSelected ?: false
+        globalSettings.claudeSkillsDangerousMode = claudeDangerousCheckbox?.isSelected ?: true
         globalSettings.pluginSkillsEnabled = pluginSkillsCheckbox?.isSelected ?: true
+        globalSettings.codexSkillsEnabled = codexSkillsCheckbox?.isSelected ?: true
+        globalSettings.codexSkillsDangerousMode = codexDangerousCheckbox?.isSelected ?: true
         globalSettings.showEmojis = showEmojisCheckbox?.isSelected ?: true
     }
 
@@ -463,6 +488,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         claudeDangerousCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
         pluginSkillsCheckbox?.isSelected = globalSettings.pluginSkillsEnabled
         pluginSkillsCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
+        codexSkillsCheckbox?.isSelected = globalSettings.codexSkillsEnabled
+        codexDangerousCheckbox?.isSelected = globalSettings.codexSkillsDangerousMode
+        codexDangerousCheckbox?.isEnabled = globalSettings.codexSkillsEnabled
         showEmojisCheckbox?.isSelected = globalSettings.showEmojis
     }
 
@@ -474,6 +502,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         claudeSkillsCheckbox = null
         claudeDangerousCheckbox = null
         pluginSkillsCheckbox = null
+        codexSkillsCheckbox = null
+        codexDangerousCheckbox = null
         showEmojisCheckbox = null
     }
 

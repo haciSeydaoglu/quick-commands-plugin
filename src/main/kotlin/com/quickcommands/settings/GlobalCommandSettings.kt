@@ -23,8 +23,10 @@ class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {
 
     var commands: MutableList<CommandEntry> = createDefaultCommands()
     var claudeSkillsEnabled: Boolean = true
-    var claudeSkillsDangerousMode: Boolean = false
+    var claudeSkillsDangerousMode: Boolean = true
     var pluginSkillsEnabled: Boolean = true
+    var codexSkillsEnabled: Boolean = true
+    var codexSkillsDangerousMode: Boolean = true
     var showEmojis: Boolean = true
 
     companion object {
@@ -33,17 +35,20 @@ class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {
         }
 
         fun createDefaultCommands(): MutableList<CommandEntry> = mutableListOf(
-            CommandEntry("claude", "claude"),
-            CommandEntry("claude\uD83D\uDE80", "claude --dangerously-skip-permissions"),
+            // Marka emojileri her halukarda basta: claude \u2192 \uD83D\uDD38, codex \u2192 \u25AA\uFE0F
+            // Yolo modu ust grup, sade ad \u2014 paralel sekmeleri ayirt etmek icin askTitleOnRun = true
+            CommandEntry("\uD83D\uDD38claude", "claude --dangerously-skip-permissions /plan", askTitleOnRun = true),
+            CommandEntry("\u25AA\uFE0Fcodex", "codex --yolo", askTitleOnRun = true),
             CommandEntry.createSeparator(),
-            CommandEntry("codex", "codex"),
-            CommandEntry("codex\uD83D\uDE80", "codex --yolo"),
+            CommandEntry("\uD83D\uDD38../claude", "cd ../ && claude --dangerously-skip-permissions /plan", askTitleOnRun = true),
+            CommandEntry("\u25AA\uFE0F../codex", "cd ../ && codex --yolo", askTitleOnRun = true),
             CommandEntry.createSeparator(),
-            CommandEntry("../claude", "cd ../ && claude"),
-            CommandEntry("../claude\uD83D\uDE80", "cd ../ && claude --dangerously-skip-permissions"),
+            // Yolo olmayan \u2014 sonda \uD83D\uDD12 kilit ile yolo olmadigi belirtilir
+            CommandEntry("\uD83D\uDD38claude\uD83D\uDD12", "claude /plan", askTitleOnRun = true),
+            CommandEntry("\u25AA\uFE0Fcodex\uD83D\uDD12", "codex", askTitleOnRun = true),
             CommandEntry.createSeparator(),
-            CommandEntry("../codex", "cd ../ && codex"),
-            CommandEntry("../codex\uD83D\uDE80", "cd ../ && codex --yolo")
+            CommandEntry("\uD83D\uDD38../claude\uD83D\uDD12", "cd ../ && claude /plan", askTitleOnRun = true),
+            CommandEntry("\u25AA\uFE0F../codex\uD83D\uDD12", "cd ../ && codex", askTitleOnRun = true)
         )
     }
 

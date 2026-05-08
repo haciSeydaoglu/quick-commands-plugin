@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.7.0]
+
+### Features
+- Added Codex CLI skill auto-detection: scans `~/.codex/skills/` (global) and `<repo>/.agents/skills/` (project) for SKILL.md entries, mirroring the existing Claude Code skill detection
+- New Global Settings toggles: "Include Codex CLI skills" and "Run with --yolo (skip approvals)"
+- Codex skill calls use single-quoted dollar syntax (`codex --yolo '$skill-name'`) to prevent shell variable expansion
+
+### Default command list redesign
+- Yolo variants (`--dangerously-skip-permissions` / `--yolo`) are now the primary entries at the top with plain names, since they are the day-to-day default
+- Brand-color emojis are persistent on every entry: claude variants always lead with 🔸, codex variants always lead with ▪️
+- Non-yolo entries get a trailing 🔒 lock to mark restricted-permission mode; yolo entries stay unsuffixed
+- All four claude entries now run with the `/plan` trailing argument
+- The 8 default claude/codex entries prompt for a tab title at run-time (`askTitleOnRun = true`); manually-added commands keep the previous off-by-default behavior
+
+### Defaults
+- YOLO / dangerous-permissions mode is now ON by default for both Claude and Codex skill invocations (was off for Claude)
+
+### Fixes
+- Settings could appear reset after IDE restart when a global or project command name contained an emoji immediately followed by a hex letter (a-f, A-F). The emoji decoder used an unbounded greedy regex that consumed the trailing hex letter into the codepoint, producing values past U+10FFFF and crashing deserialization of `GlobalCommandSettings`. The decoder is now bounded to 6 hex digits with longest-valid-prefix recovery, so existing malformed entries are restored without data loss. The encoder now emits fixed 6-hex codepoints (`\U+XXXXXX`) to remove the ambiguity at the source.
+
 ## [1.6.0]
 - Added per-command "Ask Title" option: when enabled, a prompt appears at run time asking for a custom tab title
 - The final tab title becomes "<command name> — <input>"; leaving the input empty falls back to the command name; pressing Cancel/ESC aborts the run
