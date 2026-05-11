@@ -14,6 +14,7 @@ A quick terminal command execution plugin for JetBrains IDEs (IntelliJ IDEA, Php
 - **Import / Export** - Share your global commands as JSON (clipboard or file)
 - **Separators** - Organize commands with visual divider lines
 - **Claude Skills** - Auto-detect Claude Code skills and commands (global, project, plugins)
+- **Agent Skills** - Auto-detect Agent skills from global and project `.agents/skills` folders
 - **Easy Configuration** - User-friendly three-tab settings interface (Global, Project, Settings)
 
 ## Installation
@@ -69,6 +70,11 @@ Quick Commands automatically discovers scripts from `package.json` and `composer
   /review-pr
   /my-plugin:deploy
 ──────────
+── Agents: Global ──
+  $release
+── Agents: Project ──
+  $project-workflow
+──────────
   Settings...
 ```
 
@@ -76,6 +82,15 @@ Quick Commands automatically discovers scripts from `package.json` and `composer
 - Lock file detection: `yarn.lock` -> yarn, `pnpm-lock.yaml` -> pnpm, `bun.lockb` -> bun, fallback -> npm
 - Composer event hooks (`post-install-cmd`, etc.) are filtered out automatically
 - Cache is invalidated when relevant files change
+
+### Auto-detected Agent Skills
+
+Quick Commands discovers Agent skills from:
+
+- `$HOME/.agents/skills/` (global Agent skills)
+- `<project>/.agents/skills/` (project-specific skills)
+
+Each skill must live in its own directory with a `SKILL.md` file, for example `<project>/.agents/skills/release/SKILL.md`.
 
 ### Settings
 

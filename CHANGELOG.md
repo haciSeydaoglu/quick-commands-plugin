@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0]
+
+### Fixes
+- Renamed Codex skill discovery in the UI to Agent skills and scan `$HOME/.agents/skills/` plus `<repo>/.agents/skills/`.
+- Removed `~/.codex/skills/` from automatic skill discovery.
+- Renamed persisted Agent skill settings from `codexSkills*` to `agentSkills*`; old Codex skill toggle values are intentionally not migrated.
+
 ## [1.7.0]
 
 ### Features

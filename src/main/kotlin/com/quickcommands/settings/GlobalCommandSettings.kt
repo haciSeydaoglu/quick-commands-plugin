@@ -25,8 +25,8 @@ class GlobalCommandSettings : PersistentStateComponent<GlobalCommandSettings> {
     var claudeSkillsEnabled: Boolean = true
     var claudeSkillsDangerousMode: Boolean = true
     var pluginSkillsEnabled: Boolean = true
-    var codexSkillsEnabled: Boolean = true
-    var codexSkillsDangerousMode: Boolean = true
+    var agentSkillsEnabled: Boolean = true
+    var agentSkillsDangerousMode: Boolean = true
     var showEmojis: Boolean = true
 
     companion object {

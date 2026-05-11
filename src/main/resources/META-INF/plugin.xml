@@ -18,6 +18,7 @@
             <li><b>Project Commands</b> - Set up project-specific commands stored in your project settings</li>
             <li><b>Auto-detect Scripts</b> - Discovers scripts from <code>package.json</code> and <code>composer.json</code> with monorepo support</li>
             <li><b>Claude Skills</b> - Auto-detect Claude Code skills, commands, and plugins</li>
+            <li><b>Agent Skills</b> - Auto-detect Agent skills from user and project <code>.agents/skills</code> folders</li>
             <li><b>Package Manager Detection</b> - Detects npm, yarn, pnpm, or bun based on lock files</li>
             <li><b>Keyboard Shortcut</b> - Quick access via <code>Ctrl+Alt+T</code> (customizable)</li>
             <li><b>Import / Export</b> - Share your global commands as JSON</li>
@@ -75,9 +76,9 @@
         <projectService
                 serviceImplementation="com.quickcommands.services.ClaudeSkillDetectionService"/>
 
-        <!-- Codex skill detection service (Project level) -->
+        <!-- Agent skill detection service (Project level) -->
         <projectService
-                serviceImplementation="com.quickcommands.services.CodexSkillDetectionService"/>
+                serviceImplementation="com.quickcommands.services.AgentSkillDetectionService"/>
     </extensions>
 
     <actions>

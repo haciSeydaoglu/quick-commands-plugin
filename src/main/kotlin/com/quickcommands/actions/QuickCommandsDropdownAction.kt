@@ -9,8 +9,8 @@ import com.intellij.openapi.project.DumbAware
 import com.quickcommands.services.ClaudeSkillCategory
 import com.quickcommands.services.ClaudeSkillDetectionService
 import com.quickcommands.services.ClaudeSkillGroup
-import com.quickcommands.services.CodexSkillDetectionService
-import com.quickcommands.services.CodexSkillGroup
+import com.quickcommands.services.AgentSkillDetectionService
+import com.quickcommands.services.AgentSkillGroup
 import com.quickcommands.services.DetectedScriptGroup
 import com.quickcommands.services.ScriptDetectionService
 import com.quickcommands.services.ScriptDetectionService.Companion.emojiEslestir
@@ -80,12 +80,12 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
             }
         }
 
-        // Codex Skills
-        if (globalSettings.codexSkillsEnabled) {
-            val codexService = CodexSkillDetectionService.getInstance(project)
-            val codexGruplar = codexService.getDetectedSkills()
-            if (codexGruplar.isNotEmpty()) {
-                codexMenuOlustur(codexGruplar, actions, globalSettings)
+        // Agent Skills
+        if (globalSettings.agentSkillsEnabled) {
+            val agentService = AgentSkillDetectionService.getInstance(project)
+            val agentGruplar = agentService.getDetectedSkills()
+            if (agentGruplar.isNotEmpty()) {
+                agentMenuOlustur(agentGruplar, actions, globalSettings)
             }
         }
 
@@ -186,20 +186,20 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
         }
     }
 
-    /** Codex skill gruplarini kategoriye gore menuye ekler */
-    private fun codexMenuOlustur(
-        gruplar: List<CodexSkillGroup>,
+    /** Agent skill gruplarini kategoriye gore menuye ekler */
+    private fun agentMenuOlustur(
+        gruplar: List<AgentSkillGroup>,
         actions: MutableList<AnAction>,
         globalSettings: GlobalCommandSettings
     ) {
-        val onEk = if (globalSettings.codexSkillsDangerousMode) {
+        val onEk = if (globalSettings.agentSkillsDangerousMode) {
             "codex --yolo"
         } else {
             "codex"
         }
 
         for (grup in gruplar) {
-            actions.add(Separator.create("Codex: ${grup.category.displayName}"))
+            actions.add(Separator.create("Agents: ${grup.category.displayName}"))
             grup.skills.forEach { skill ->
                 // Tek tirnak: shell $skill-ad'ini env var olarak expand etmesin
                 val komut = "$onEk '${skill.invokeToken}'"
@@ -212,7 +212,7 @@ class QuickCommandsDropdownAction : DefaultActionGroup(), DumbAware {
                 actions.add(RunCommandAction(
                     etiket,
                     komut,
-                    "codex-${skill.name}"
+                    "agents-${skill.name}"
                 ))
             }
         }

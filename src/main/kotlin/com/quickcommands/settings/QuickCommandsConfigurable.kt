@@ -76,8 +76,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
     private var claudeSkillsCheckbox: JBCheckBox? = null
     private var claudeDangerousCheckbox: JBCheckBox? = null
     private var pluginSkillsCheckbox: JBCheckBox? = null
-    private var codexSkillsCheckbox: JBCheckBox? = null
-    private var codexDangerousCheckbox: JBCheckBox? = null
+    private var agentSkillsCheckbox: JBCheckBox? = null
+    private var agentDangerousCheckbox: JBCheckBox? = null
     private var showEmojisCheckbox: JBCheckBox? = null
 
     private var mainPanel: JComponent? = null
@@ -165,19 +165,19 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         }
         globalSection.add(pluginSkillsCheckbox!!)
 
-        codexSkillsCheckbox = JBCheckBox("Include Codex CLI skills").apply {
-            isSelected = globalSettings.codexSkillsEnabled
+        agentSkillsCheckbox = JBCheckBox("Include Agent skills").apply {
+            isSelected = globalSettings.agentSkillsEnabled
             alignmentX = Component.LEFT_ALIGNMENT
         }
-        globalSection.add(codexSkillsCheckbox!!)
+        globalSection.add(agentSkillsCheckbox!!)
 
-        codexDangerousCheckbox = JBCheckBox("Run with --yolo (skip approvals)").apply {
-            isSelected = globalSettings.codexSkillsDangerousMode
-            isEnabled = globalSettings.codexSkillsEnabled
+        agentDangerousCheckbox = JBCheckBox("Run Agent skills with codex --yolo (skip approvals)").apply {
+            isSelected = globalSettings.agentSkillsDangerousMode
+            isEnabled = globalSettings.agentSkillsEnabled
             alignmentX = Component.LEFT_ALIGNMENT
             border = JBUI.Borders.emptyLeft(20)
         }
-        globalSection.add(codexDangerousCheckbox!!)
+        globalSection.add(agentDangerousCheckbox!!)
 
         showEmojisCheckbox = JBCheckBox("Show emoji icons").apply {
             isSelected = globalSettings.showEmojis
@@ -192,9 +192,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
             pluginSkillsCheckbox!!.isEnabled = aktif
         }
 
-        // Codex checkbox degistiginde alt checkbox'i aktif/pasif yap
-        codexSkillsCheckbox!!.addChangeListener {
-            codexDangerousCheckbox!!.isEnabled = codexSkillsCheckbox!!.isSelected
+        // Agent skills checkbox degistiginde alt checkbox'i aktif/pasif yap
+        agentSkillsCheckbox!!.addChangeListener {
+            agentDangerousCheckbox!!.isEnabled = agentSkillsCheckbox!!.isSelected
         }
 
         panel.add(globalSection)
@@ -418,8 +418,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
                     || claudeSkillsCheckbox?.isSelected != globalSettings.claudeSkillsEnabled
                     || claudeDangerousCheckbox?.isSelected != globalSettings.claudeSkillsDangerousMode
                     || pluginSkillsCheckbox?.isSelected != globalSettings.pluginSkillsEnabled
-                    || codexSkillsCheckbox?.isSelected != globalSettings.codexSkillsEnabled
-                    || codexDangerousCheckbox?.isSelected != globalSettings.codexSkillsDangerousMode
+                    || agentSkillsCheckbox?.isSelected != globalSettings.agentSkillsEnabled
+                    || agentDangerousCheckbox?.isSelected != globalSettings.agentSkillsDangerousMode
                     || showEmojisCheckbox?.isSelected != globalSettings.showEmojis
 
         return globalModified || projectModified || settingsModified
@@ -453,8 +453,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         globalSettings.claudeSkillsEnabled = claudeSkillsCheckbox?.isSelected ?: true
         globalSettings.claudeSkillsDangerousMode = claudeDangerousCheckbox?.isSelected ?: true
         globalSettings.pluginSkillsEnabled = pluginSkillsCheckbox?.isSelected ?: true
-        globalSettings.codexSkillsEnabled = codexSkillsCheckbox?.isSelected ?: true
-        globalSettings.codexSkillsDangerousMode = codexDangerousCheckbox?.isSelected ?: true
+        globalSettings.agentSkillsEnabled = agentSkillsCheckbox?.isSelected ?: true
+        globalSettings.agentSkillsDangerousMode = agentDangerousCheckbox?.isSelected ?: true
         globalSettings.showEmojis = showEmojisCheckbox?.isSelected ?: true
     }
 
@@ -488,9 +488,9 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         claudeDangerousCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
         pluginSkillsCheckbox?.isSelected = globalSettings.pluginSkillsEnabled
         pluginSkillsCheckbox?.isEnabled = globalSettings.claudeSkillsEnabled
-        codexSkillsCheckbox?.isSelected = globalSettings.codexSkillsEnabled
-        codexDangerousCheckbox?.isSelected = globalSettings.codexSkillsDangerousMode
-        codexDangerousCheckbox?.isEnabled = globalSettings.codexSkillsEnabled
+        agentSkillsCheckbox?.isSelected = globalSettings.agentSkillsEnabled
+        agentDangerousCheckbox?.isSelected = globalSettings.agentSkillsDangerousMode
+        agentDangerousCheckbox?.isEnabled = globalSettings.agentSkillsEnabled
         showEmojisCheckbox?.isSelected = globalSettings.showEmojis
     }
 
@@ -502,8 +502,8 @@ class QuickCommandsConfigurable(private val project: Project) : Configurable {
         claudeSkillsCheckbox = null
         claudeDangerousCheckbox = null
         pluginSkillsCheckbox = null
-        codexSkillsCheckbox = null
-        codexDangerousCheckbox = null
+        agentSkillsCheckbox = null
+        agentDangerousCheckbox = null
         showEmojisCheckbox = null
     }
 
